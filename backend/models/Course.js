@@ -17,6 +17,27 @@ const courseSchema = new mongoose.Schema({
         type: Date,
         required: true,
     },
+    endDate: {
+        type: Date,
+        required: true,
+    },
+    enrolledStudents: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+    }],
+    materials: [{
+        title: String,
+        type: String,
+        url: String,
+        uploadDate: {
+            type: Date,
+            default: Date.now
+        }
+    }],
+    createdAt: {
+        type: Date,
+        default: Date.now
+    },
     status: {
         type: String,
         enum: ['Active', 'Upcoming', 'Completed'],

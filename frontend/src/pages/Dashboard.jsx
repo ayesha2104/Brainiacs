@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
+import { Link, useLocation } from 'react-router-dom';
 import { FiHome, FiBook, FiClipboard, FiBarChart2, FiHelpCircle, FiBell } from 'react-icons/fi';
 
 const Dashboard = () => {
   const [user, setUser] = useState(null);
+  const location = useLocation();
   const [courses] = useState([
     {
       id: 1,
@@ -64,6 +66,14 @@ const Dashboard = () => {
     fetchData();
   }, []);
 
+  const navigationItems = [
+    { icon: <FiHome className="w-5 h-5" />, text: 'Dashboard', path: '/dashboard' },
+    { icon: <FiBook className="w-5 h-5" />, text: 'Courses', path: '/courses' },
+    { icon: <FiClipboard className="w-5 h-5" />, text: 'Homeworks', path: '/homeworks' },
+    { icon: <FiBarChart2 className="w-5 h-5" />, text: 'Statistics', path: '/statistics' },
+    { icon: <FiHelpCircle className="w-5 h-5" />, text: 'Need Support', path: '/support' },
+  ];
+
   return (
     <div className="flex min-h-screen bg-gray-100">
       {/* Sidebar */}
@@ -80,24 +90,18 @@ const Dashboard = () => {
           </div>
         </div>
         <nav className="mt-6 px-4">
-          {[
-            { icon: <FiHome className="w-5 h-5" />, text: 'Dashboard', active: true },
-            { icon: <FiBook className="w-5 h-5" />, text: 'Courses' },
-            { icon: <FiClipboard className="w-5 h-5" />, text: 'Homeworks' },
-            { icon: <FiBarChart2 className="w-5 h-5" />, text: 'Statistic' },
-            { icon: <FiHelpCircle className="w-5 h-5" />, text: 'Need support' },
-          ].map((item) => (
-            <a
+          {navigationItems.map((item) => (
+            <Link
               key={item.text}
-              href="#"
-              className={`flex items-center space-x-3 px-4 py-3 rounded-lg mb-2 transition-colors duration-150 ${item.active
+              to={item.path}
+              className={`flex items-center space-x-3 px-4 py-3 rounded-lg mb-2 transition-colors duration-150 ${location.pathname === item.path
                 ? 'bg-gradient-to-r from-purple-500 to-indigo-600 text-white'
                 : 'text-gray-600 hover:bg-gray-50'
                 }`}
             >
               {item.icon}
               <span>{item.text}</span>
-            </a>
+            </Link>
           ))}
         </nav>
       </div>
