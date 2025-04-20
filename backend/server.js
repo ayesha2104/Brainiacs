@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import cors from 'cors';  // Add this import
 import authRoutes from './routes/auth.js';
 import userRoutes from './routes/user.js';
+import courseRoutes from './routes/courseRoutes.js';
 
 dotenv.config();
 const app = express();
@@ -19,6 +20,7 @@ app.use(cors({
 app.use(express.json());
 app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
+app.use('/api/courses', courseRoutes);
 
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log("MongoDB connected"))

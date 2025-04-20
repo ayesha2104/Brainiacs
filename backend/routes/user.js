@@ -1,10 +1,10 @@
 import express from 'express';
-import authMiddleware from '../middleware/authMiddleware.js';
+import { protect } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
 // Protected route
-router.get('/dashboard', authMiddleware, (req, res) => {
+router.get('/dashboard', protect, (req, res) => {
   res.json({ message: `Welcome, User ID: ${req.user.id}` });
 });
 
