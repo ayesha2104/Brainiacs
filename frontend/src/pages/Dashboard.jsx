@@ -23,13 +23,22 @@ const Dashboard = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-      <div className="bg-white p-8 rounded-xl shadow-lg w-full max-w-xl text-center">
-        <h1 className="text-3xl font-bold mb-4 text-purple-700">Welcome to Brainiacs 🎓</h1>
+    <div className="min-h-screen bg-gradient-to-br from-purple-100 via-blue-50 to-pink-100 flex items-center justify-center px-4">
+      <div className="bg-white shadow-2xl rounded-2xl p-10 max-w-2xl w-full transition-all duration-500 transform hover:scale-[1.02]">
+        <h1 className="text-4xl font-extrabold text-purple-700 mb-4">🎓 Welcome to Brainiacs</h1>
+        <p className="text-lg text-gray-600 mb-6">
+          A place to grow, collaborate, and learn smarter.
+        </p>
+
         {user ? (
-          <p className="text-lg text-gray-700">Hello, <span className="font-semibold">{user.name}</span>!</p>
+          <div className="bg-purple-50 border border-purple-200 rounded-lg p-6">
+            <p className="text-gray-700 text-xl">
+              Hello, <span className="font-semibold text-purple-800">{user.name}</span> 👋
+            </p>
+            <p className="mt-2 text-sm text-gray-500">You're logged in and ready to explore!</p>
+          </div>
         ) : (
-          <p className="text-lg text-gray-500">Loading user data...</p>
+          <p className="text-gray-500 text-md">Loading your dashboard...</p>
         )}
       </div>
     </div>

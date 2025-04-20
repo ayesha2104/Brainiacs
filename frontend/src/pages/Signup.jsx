@@ -18,6 +18,7 @@ function Signup() {
         email,
         password,
       });
+      
       localStorage.setItem('token', response.data.token); // Store the token in local storage
       navigate('/dashboard'); // Redirect to dashboard
     } catch (error) {
