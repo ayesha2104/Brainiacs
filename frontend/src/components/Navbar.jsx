@@ -17,7 +17,7 @@ function Navbar() {
         {token ? (
           <>
             <li><Link to="/dashboard" className="text-gray-700 hover:text-purple-600 transition-colors">Dashboard</Link></li>
-            <li><Link to="/courses" className="text-gray-700 hover:text-purple-600 transition-colors">Courses</Link></li>
+            {/* <li><Link to="/courses" className="text-gray-700 hover:text-purple-600 transition-colors">Courses</Link></li> */}
             <li>
               <button
                 onClick={handleLogout}
