@@ -8,8 +8,8 @@ const userSchema = new mongoose.Schema({
   },
   email: {
     type: String,
-    unique: true,
     required: true,
+    unique: true,
     trim: true,
     lowercase: true,
   },
@@ -17,7 +17,26 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true,
     minlength: 6,
+  },
+  role: {
+    type: String,
+    required: true,
+    enum: ['student', 'teacher'],
+    default: 'student'
+  },
+  courses: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Course'
+  }],
+  createdAt: {
+    type: Date,
+    default: Date.now
   }
 }, { timestamps: true });
 
-export default mongoose.model('User', userSchema);
+// Add index for faster queries
+userSchema.index({ email: 1 });
+
+const User = mongoose.model('User', userSchema);
+
+export default User;

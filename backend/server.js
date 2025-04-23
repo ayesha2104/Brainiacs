@@ -13,20 +13,36 @@ import supportRoutes from './routes/support.js';
 // Load environment variables
 dotenv.config();
 
+// Check environment variables
+if (!process.env.MONGO_URI) {
+  console.error('❌ MONGO_URI is not defined in .env file');
+  process.exit(1);
+}
+
+if (!process.env.JWT_SECRET) {
+  console.error('❌ JWT_SECRET is not defined in .env file');
+  process.exit(1);
+}
+
 const app = express();
 const PORT = process.env.PORT || 5000;
 const MONGO_URI = process.env.MONGO_URI;
 
-// Enable CORS with specific config
+// CORS configuration
 app.use(cors({
-  origin: 'http://localhost:5173',
+  origin: '*', // Allow all origins during development
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true,
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
 // Middleware to parse JSON
 app.use(express.json());
+
+// Debug middleware to log all requests
+app.use((req, res, next) => {
+  console.log(`📨 ${req.method} ${req.url}`);
+  next();
+});
 
 // Routes
 app.use('/api/auth', authRoutes);
@@ -36,13 +52,23 @@ app.use('/api/homeworks', homeworkRoutes);
 app.use('/api/statistics', statisticsRoutes);
 app.use('/api/support', supportRoutes);
 
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error('❌ Server error:', err);
+  res.status(500).json({ message: 'Internal server error', error: err.message });
+});
+
 // Connect to MongoDB and start server
 mongoose.connect(MONGO_URI)
   .then(() => {
-    console.log('✅ MongoDB connected');
-    app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+    console.log('✅ MongoDB connected successfully');
+    app.listen(PORT, () => {
+      console.log(`🚀 Server running on port ${PORT}`);
+      console.log(`🌐 API available at http://localhost:${PORT}/api`);
+    });
   })
   .catch((err) => {
     console.error('❌ MongoDB connection error:', err.message);
+    console.error('❌ Error details:', err);
     process.exit(1);
   });

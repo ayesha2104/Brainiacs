@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import axios from '../utils/axios';
 
 const HomeworkCard = ({ homework, onStatusChange }) => {
     const statusColors = {
@@ -41,131 +41,104 @@ const HomeworkCard = ({ homework, onStatusChange }) => {
 const Homeworks = () => {
     const [homeworks, setHomeworks] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
     const [filter, setFilter] = useState('all');
-
-    // Mock data for testing
-    const mockHomeworks = [
-        {
-            _id: '1',
-            title: 'Python Programming Assignment',
-            description: 'Complete exercises on variables and data types',
-            courseName: 'Introduction to Programming',
-            dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-            status: 'pending'
-        },
-        {
-            _id: '2',
-            title: 'Web Development Project',
-            description: 'Create a responsive landing page using HTML, CSS, and JavaScript',
-            courseName: 'Web Development',
-            dueDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
-            status: 'pending'
-        },
-        {
-            _id: '3',
-            title: 'Data Structures Implementation',
-            description: 'Implement a binary search tree and perform basic operations',
-            courseName: 'Data Structures',
-            dueDate: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
-            status: 'overdue'
-        },
-        {
-            _id: '4',
-            title: 'Algorithm Analysis',
-            description: 'Analyze time complexity of sorting algorithms and submit report',
-            courseName: 'Data Structures',
-            dueDate: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
-            status: 'completed'
-        }
-    ];
-
-    useEffect(() => {
-        fetchHomeworks();
-    }, []);
 
     const fetchHomeworks = async () => {
         try {
-            const response = await axios.get('/api/homeworks');
-            // Ensure we have an array of homeworks
-            const homeworksData = Array.isArray(response.data) ? response.data : [];
-            setHomeworks(homeworksData);
-            setLoading(false);
+            setLoading(true);
+            const response = await axios.get('/homeworks');
+            setHomeworks(response.data);
+            setError('');
         } catch (error) {
-            console.error('Failed to fetch homeworks:', error);
-            // Use mock data as fallback
-            setHomeworks(mockHomeworks);
+            console.error('Error fetching homeworks:', error);
+            setError('Failed to fetch homeworks. Please try again later.');
+        } finally {
             setLoading(false);
         }
     };
 
     const handleStatusChange = async (homeworkId, newStatus) => {
         try {
-            await axios.patch(`/api/homeworks/${homeworkId}`, { status: newStatus });
-            fetchHomeworks(); // Refresh the list
+            await axios.patch(`/homeworks/${homeworkId}/status`, { status: newStatus });
+            // Refresh the homeworks list
+            fetchHomeworks();
         } catch (error) {
-            console.error('Failed to update homework status:', error);
-            // If API fails, update local state
-            setHomeworks(prevHomeworks => {
-                // Ensure prevHomeworks is an array
-                if (!Array.isArray(prevHomeworks)) return mockHomeworks;
-                return prevHomeworks.map(hw =>
-                    hw._id === homeworkId ? { ...hw, status: newStatus } : hw
-                );
-            });
+            console.error('Error updating homework status:', error);
+            alert('Failed to update homework status. Please try again.');
         }
     };
 
-    // Ensure homeworks is always an array before filtering
-    const safeHomeworks = Array.isArray(homeworks) ? homeworks : [];
-    const filteredHomeworks = safeHomeworks.filter(homework => {
+    useEffect(() => {
+        fetchHomeworks();
+    }, []);
+
+    const filteredHomeworks = homeworks.filter(homework => {
         if (filter === 'all') return true;
         return homework.status === filter;
     });
 
     if (loading) {
         return (
-            <div className="flex justify-center items-center py-20">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+            <div className="flex justify-center items-center h-64">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
             </div>
         );
     }
 
     return (
-        <div className="container mx-auto px-4 py-8">
-            <div className="max-w-6xl mx-auto">
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-                    <h1 className="text-3xl font-bold text-gray-800">Homeworks</h1>
-                    <div className="flex flex-wrap gap-2">
-                        {['all', 'pending', 'completed', 'overdue'].map((status) => (
-                            <button
-                                key={status}
-                                onClick={() => setFilter(status)}
-                                className={`px-4 py-2 rounded-md transition-colors ${filter === status
-                                    ? 'bg-blue-500 text-white'
-                                    : 'bg-white text-gray-600 hover:bg-gray-50 border border-gray-200'
-                                    }`}
-                            >
-                                {status.charAt(0).toUpperCase() + status.slice(1)}
-                            </button>
-                        ))}
-                    </div>
-                </div>
-                <div className="space-y-4">
-                    {filteredHomeworks.length > 0 ? (
-                        filteredHomeworks.map((homework) => (
-                            <HomeworkCard
-                                key={homework._id}
-                                homework={homework}
-                                onStatusChange={handleStatusChange}
-                            />
-                        ))
-                    ) : (
-                        <div className="bg-white rounded-lg shadow-md p-8 text-center">
-                            <p className="text-gray-500 text-lg">No homeworks found for the selected filter.</p>
-                        </div>
-                    )}
+        <div className="max-w-4xl mx-auto p-6">
+            <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-bold text-gray-800">My Homeworks</h2>
+                <div className="flex space-x-2">
+                    <button
+                        onClick={() => setFilter('all')}
+                        className={`px-4 py-2 rounded-md ${filter === 'all' ? 'bg-purple-600 text-white' : 'bg-gray-200 text-gray-700'}`}
+                    >
+                        All
+                    </button>
+                    <button
+                        onClick={() => setFilter('pending')}
+                        className={`px-4 py-2 rounded-md ${filter === 'pending' ? 'bg-purple-600 text-white' : 'bg-gray-200 text-gray-700'}`}
+                    >
+                        Pending
+                    </button>
+                    <button
+                        onClick={() => setFilter('completed')}
+                        className={`px-4 py-2 rounded-md ${filter === 'completed' ? 'bg-purple-600 text-white' : 'bg-gray-200 text-gray-700'}`}
+                    >
+                        Completed
+                    </button>
+                    <button
+                        onClick={() => setFilter('overdue')}
+                        className={`px-4 py-2 rounded-md ${filter === 'overdue' ? 'bg-purple-600 text-white' : 'bg-gray-200 text-gray-700'}`}
+                    >
+                        Overdue
+                    </button>
                 </div>
             </div>
+
+            {error && (
+                <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
+                    {error}
+                </div>
+            )}
+
+            {filteredHomeworks.length === 0 ? (
+                <div className="text-center py-8">
+                    <p className="text-gray-500">No homeworks found.</p>
+                </div>
+            ) : (
+                <div className="space-y-4">
+                    {filteredHomeworks.map(homework => (
+                        <HomeworkCard
+                            key={homework._id}
+                            homework={homework}
+                            onStatusChange={handleStatusChange}
+                        />
+                    ))}
+                </div>
+            )}
         </div>
     );
 };

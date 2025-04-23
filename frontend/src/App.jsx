@@ -3,6 +3,12 @@ import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Dashboard from './pages/Dashboard';
+import TeacherDashboard from './pages/TeacherDashboard';
+import TeacherHomework from './pages/teacher/Homework';
+import TeacherAttendance from './pages/teacher/Attendance';
+import TeacherHolidays from './pages/teacher/Holidays';
+import TeacherSchedules from './pages/teacher/Schedules';
+import TeacherSupport from './pages/teacher/Support';
 import Courses from './pages/Courses';
 import Homeworks from './pages/Homeworks';
 import Statistics from './pages/Statistics';
@@ -18,14 +24,25 @@ function App() {
         <Navbar />
         <main className="flex-1">
           <Routes>
+            {/* Public routes */}
             <Route path="/" element={<Landing />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
-            <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-            <Route path="/courses" element={<ProtectedRoute><Courses /></ProtectedRoute>} />
-            <Route path="/homeworks" element={<ProtectedRoute><Homeworks /></ProtectedRoute>} />
-            <Route path="/statistics" element={<ProtectedRoute><Statistics /></ProtectedRoute>} />
-            <Route path="/support" element={<ProtectedRoute><Support /></ProtectedRoute>} />
+            
+            {/* Protected routes for students */}
+            <Route path="/student-dashboard" element={<ProtectedRoute allowedRoles={['student']}><Dashboard /></ProtectedRoute>} />
+            <Route path="/student-courses" element={<ProtectedRoute allowedRoles={['student']}><Courses /></ProtectedRoute>} />
+            <Route path="/student-homeworks" element={<ProtectedRoute allowedRoles={['student']}><Homeworks /></ProtectedRoute>} />
+            <Route path="/student-statistics" element={<ProtectedRoute allowedRoles={['student']}><Statistics /></ProtectedRoute>} />
+            <Route path="/student-support" element={<ProtectedRoute allowedRoles={['student']}><Support /></ProtectedRoute>} />
+            
+            {/* Protected routes for teachers */}
+            <Route path="/teacher-dashboard" element={<ProtectedRoute allowedRoles={['teacher']}><TeacherDashboard /></ProtectedRoute>} />
+            <Route path="/teacher-dashboard/homework" element={<ProtectedRoute allowedRoles={['teacher']}><TeacherHomework /></ProtectedRoute>} />
+            <Route path="/teacher-dashboard/attendance" element={<ProtectedRoute allowedRoles={['teacher']}><TeacherAttendance /></ProtectedRoute>} />
+            <Route path="/teacher-dashboard/holidays" element={<ProtectedRoute allowedRoles={['teacher']}><TeacherHolidays /></ProtectedRoute>} />
+            <Route path="/teacher-dashboard/schedules" element={<ProtectedRoute allowedRoles={['teacher']}><TeacherSchedules /></ProtectedRoute>} />
+            <Route path="/teacher-dashboard/support" element={<ProtectedRoute allowedRoles={['teacher']}><TeacherSupport /></ProtectedRoute>} />
           </Routes>
         </main>
       </div>

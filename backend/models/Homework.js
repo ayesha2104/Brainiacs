@@ -13,11 +13,6 @@ const homeworkSchema = new mongoose.Schema({
         type: String,
         required: true
     },
-    course: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Course',
-        required: true
-    },
     dueDate: {
         type: Date,
         required: true
