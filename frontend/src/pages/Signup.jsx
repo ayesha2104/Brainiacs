@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from '../utils/axios';
-import { FiUser, FiLock, FiMail } from 'react-icons/fi';
+import { FiUser, FiLock, FiMail, FiBook, FiCalendar, FiBriefcase } from 'react-icons/fi';
 
 function Signup() {
   const [name, setName] = useState('');
@@ -10,6 +10,18 @@ function Signup() {
   const [role, setRole] = useState('student');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  // Additional fields for students
+  const [studentId, setStudentId] = useState('');
+  const [semester, setSemester] = useState('');
+  const [course, setCourse] = useState('');
+  const [degree, setDegree] = useState('');
+
+  // Additional fields for teachers
+  const [teacherId, setTeacherId] = useState('');
+  const [department, setDepartment] = useState('');
+  const [specialization, setSpecialization] = useState('');
+
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -18,24 +30,41 @@ function Signup() {
     setLoading(true);
 
     try {
-      const response = await axios.post('/auth/signup', {
-        name,
+      // Prepare the data according to the backend's expected structure
+      const userData = {
         email,
         password,
-        role
-      });
-      
-      localStorage.setItem('token', response.data.token);
-      localStorage.setItem('role', role);
-      localStorage.setItem('user', JSON.stringify(response.data.user));
-      
-      if (role === 'student') {
-        navigate('/student-dashboard');
+        role,
+        name,
+        ...(role === 'student' ? {
+          studentId,
+          course,
+          semester,
+          degree
+        } : {
+          teacherId,
+          department,
+          specialization,
+          qualifications: [], // Default empty array for new teachers
+          experience: 0 // Default experience for new teachers
+        })
+      };
+
+      const response = await axios.post('/auth/signup', userData);
+
+      if (response.data.token) {
+        localStorage.setItem('token', response.data.token);
+        localStorage.setItem('role', response.data.user.role);
+        localStorage.setItem('user', JSON.stringify(response.data.user));
+
+        // Redirect based on role
+        navigate(role === 'student' ? '/student-dashboard' : '/teacher-dashboard');
       } else {
-        navigate('/teacher-dashboard');
+        throw new Error('Registration failed - no token received');
       }
     } catch (error) {
-      setError(error.response?.data?.message || 'Signup failed. Please try again.');
+      console.error('Signup error:', error);
+      setError(error.response?.data?.error || 'Registration failed. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -74,22 +103,20 @@ function Signup() {
             <button
               type="button"
               onClick={() => setRole('student')}
-              className={`flex-1 py-3 px-4 rounded-lg text-sm font-medium transition-colors ${
-                role === 'student'
-                  ? 'bg-purple-600 text-white shadow-md'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
+              className={`flex-1 py-3 px-4 rounded-lg text-sm font-medium transition-colors ${role === 'student'
+                ? 'bg-purple-600 text-white shadow-md'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
             >
               Student
             </button>
             <button
               type="button"
               onClick={() => setRole('teacher')}
-              className={`flex-1 py-3 px-4 rounded-lg text-sm font-medium transition-colors ${
-                role === 'teacher'
-                  ? 'bg-purple-600 text-white shadow-md'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
+              className={`flex-1 py-3 px-4 rounded-lg text-sm font-medium transition-colors ${role === 'teacher'
+                ? 'bg-purple-600 text-white shadow-md'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
             >
               Teacher
             </button>
@@ -143,29 +170,124 @@ function Signup() {
                 onChange={(e) => setPassword(e.target.value)}
               />
             </div>
+
+            {/* Student-specific fields */}
+            {role === 'student' && (
+              <>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <FiUser className="h-5 w-5 text-gray-400" />
+                  </div>
+                  <input
+                    type="text"
+                    required
+                    className="appearance-none block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm"
+                    placeholder="Student ID"
+                    value={studentId}
+                    onChange={(e) => setStudentId(e.target.value)}
+                  />
+                </div>
+
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <FiCalendar className="h-5 w-5 text-gray-400" />
+                  </div>
+                  <input
+                    type="text"
+                    required
+                    className="appearance-none block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm"
+                    placeholder="Semester (e.g., 3rd)"
+                    value={semester}
+                    onChange={(e) => setSemester(e.target.value)}
+                  />
+                </div>
+
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <FiBook className="h-5 w-5 text-gray-400" />
+                  </div>
+                  <input
+                    type="text"
+                    required
+                    className="appearance-none block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm"
+                    placeholder="Course (e.g., CSE)"
+                    value={course}
+                    onChange={(e) => setCourse(e.target.value)}
+                  />
+                </div>
+
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <FiBriefcase className="h-5 w-5 text-gray-400" />
+                  </div>
+                  <input
+                    type="text"
+                    required
+                    className="appearance-none block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm"
+                    placeholder="Degree (e.g., BTech)"
+                    value={degree}
+                    onChange={(e) => setDegree(e.target.value)}
+                  />
+                </div>
+              </>
+            )}
+
+            {/* Teacher-specific fields */}
+            {role === 'teacher' && (
+              <>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <FiUser className="h-5 w-5 text-gray-400" />
+                  </div>
+                  <input
+                    type="text"
+                    required
+                    className="appearance-none block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm"
+                    placeholder="Teacher ID"
+                    value={teacherId}
+                    onChange={(e) => setTeacherId(e.target.value)}
+                  />
+                </div>
+
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <FiBriefcase className="h-5 w-5 text-gray-400" />
+                  </div>
+                  <input
+                    type="text"
+                    required
+                    className="appearance-none block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm"
+                    placeholder="Department"
+                    value={department}
+                    onChange={(e) => setDepartment(e.target.value)}
+                  />
+                </div>
+
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <FiBook className="h-5 w-5 text-gray-400" />
+                  </div>
+                  <input
+                    type="text"
+                    required
+                    className="appearance-none block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm"
+                    placeholder="Specialization"
+                    value={specialization}
+                    onChange={(e) => setSpecialization(e.target.value)}
+                  />
+                </div>
+              </>
+            )}
           </div>
 
-          <div>
-            <button
-              type="submit"
-              disabled={loading}
-              className={`group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white ${
-                loading ? 'bg-purple-400' : 'bg-purple-600 hover:bg-purple-700'
-              } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-colors`}
-            >
-              {loading ? (
-                <span className="flex items-center">
-                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Creating account...
-                </span>
-              ) : (
-                'Create account'
-              )}
-            </button>
-          </div>
+          <button
+            type="submit"
+            disabled={loading}
+            className={`w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 ${loading ? 'opacity-50 cursor-not-allowed' : ''
+              }`}
+          >
+            {loading ? 'Signing up...' : 'Sign up'}
+          </button>
 
           <div className="text-center">
             <p className="text-sm text-gray-600">

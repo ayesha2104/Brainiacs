@@ -11,19 +11,29 @@ export const protect = async (req, res, next) => {
 
   try {
     // Verify token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your_jwt_secret');
-    req.user = await User.findById(decoded.id).select('-password');
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
+
+    // Use userId from token (matches what we set in authController)
+    req.user = { id: decoded.userId, role: decoded.role };
+
+    // Fetch the full user data
+    const user = await User.findById(decoded.userId).select('-password');
+    if (!user) {
+      return res.status(401).json({ message: 'User not found' });
+    }
+
+    req.user = { id: user._id, role: user.role };
     next(); // Let the user go to the route
   } catch (err) {
+    console.error('Auth middleware error:', err);
     res.status(401).json({ message: 'Invalid or expired token' });
   }
 };
 
 export const admin = (req, res, next) => {
-  if (req.user && req.user.isAdmin) {
+  if (req.user && req.user.role === 'admin') {
     next();
   } else {
-    res.status(401);
-    throw new Error('Not authorized as an admin');
+    res.status(403).json({ message: 'Not authorized as an admin' });
   }
 };

@@ -8,7 +8,7 @@ const router = express.Router();
 // Signup Route
 router.post('/signup', async (req, res) => {
   try {
-    const { name, email, password, role } = req.body;
+    const { name, email, password, role, studentProfile, teacherProfile } = req.body;
 
     // Validate required fields
     if (!name || !email || !password || !role) {
@@ -20,6 +20,16 @@ router.post('/signup', async (req, res) => {
       return res.status(400).json({ message: 'Invalid role' });
     }
 
+    // Additional validation for student profile
+    if (role === 'student' && (!studentProfile?.studentId || !studentProfile?.semester || !studentProfile?.course || !studentProfile?.degree)) {
+      return res.status(400).json({ message: 'All student profile fields are required' });
+    }
+
+    // Additional validation for teacher profile
+    if (role === 'teacher' && (!teacherProfile?.teacherId || !teacherProfile?.department || !teacherProfile?.specialization)) {
+      return res.status(400).json({ message: 'All teacher profile fields are required' });
+    }
+
     // Check if user already exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
@@ -29,12 +39,14 @@ router.post('/signup', async (req, res) => {
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create new user
+    // Create new user with profile data
     const newUser = new User({
       name,
       email,
       password: hashedPassword,
-      role
+      role,
+      ...(role === 'student' && { studentProfile }),
+      ...(role === 'teacher' && { teacherProfile })
     });
 
     await newUser.save();
@@ -52,6 +64,8 @@ router.post('/signup', async (req, res) => {
       name: newUser.name,
       email: newUser.email,
       role: newUser.role,
+      ...(role === 'student' && { studentProfile: newUser.studentProfile }),
+      ...(role === 'teacher' && { teacherProfile: newUser.teacherProfile }),
       createdAt: newUser.createdAt
     };
 
@@ -95,8 +109,8 @@ router.post('/login', async (req, res) => {
 
     // Check role
     if (user.role !== role) {
-      return res.status(403).json({ 
-        message: `Access denied. This account is registered as a ${user.role}` 
+      return res.status(403).json({
+        message: `Access denied. This account is registered as a ${user.role}`
       });
     }
 
@@ -138,7 +152,7 @@ router.get('/me', async (req, res) => {
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const user = await User.findById(decoded.id).select('-password');
-    
+
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }

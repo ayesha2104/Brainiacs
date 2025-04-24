@@ -2,6 +2,8 @@ import express from 'express';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import cors from 'cors';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 import authRoutes from './routes/auth.js';
 import userRoutes from './routes/user.js';
@@ -9,6 +11,7 @@ import courseRoutes from './routes/courseRoutes.js';
 import homeworkRoutes from './routes/homeworks.js';
 import statisticsRoutes from './routes/statistics.js';
 import supportRoutes from './routes/support.js';
+import profileRoutes from './routes/profile.js';
 
 // Load environment variables
 dotenv.config();
@@ -28,6 +31,9 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 const MONGO_URI = process.env.MONGO_URI;
 
+// Get the directory name of the current module
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
 // CORS configuration
 app.use(cors({
   origin: '*', // Allow all origins during development
@@ -37,6 +43,9 @@ app.use(cors({
 
 // Middleware to parse JSON
 app.use(express.json());
+
+// Serve static files from the uploads directory
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Debug middleware to log all requests
 app.use((req, res, next) => {
@@ -51,6 +60,7 @@ app.use('/api/courses', courseRoutes);
 app.use('/api/homeworks', homeworkRoutes);
 app.use('/api/statistics', statisticsRoutes);
 app.use('/api/support', supportRoutes);
+app.use('/api/profile', profileRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {

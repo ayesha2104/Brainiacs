@@ -1,38 +1,85 @@
 import mongoose from 'mongoose';
 
-const userSchema = new mongoose.Schema({
-  name: {
+const studentProfileSchema = new mongoose.Schema({
+  name: String,
+  studentId: {
     type: String,
-    required: true,
-    trim: true,
+    required: true
   },
+  course: {
+    type: String,
+    required: true
+  },
+  semester: {
+    type: String,
+    required: true
+  },
+  degree: {
+    type: String,
+    required: true
+  },
+  bio: String,
+  interests: [String],
+  avatar: String,
+  coursesCompleted: {
+    type: Number,
+    default: 0
+  },
+  studyHours: {
+    type: Number,
+    default: 0
+  }
+});
+
+const teacherProfileSchema = new mongoose.Schema({
+  name: String,
+  teacherId: {
+    type: String,
+    required: true
+  },
+  department: {
+    type: String,
+    required: true
+  },
+  specialization: {
+    type: String,
+    required: true
+  },
+  qualifications: [String],
+  experience: {
+    type: Number,
+    default: 0
+  },
+  bio: String,
+  courses: [{
+    title: String,
+    schedule: String
+  }],
+  avatar: String
+});
+
+const userSchema = new mongoose.Schema({
   email: {
     type: String,
     required: true,
-    unique: true,
-    trim: true,
-    lowercase: true,
+    unique: true
   },
   password: {
     type: String,
-    required: true,
-    minlength: 6,
+    required: true
   },
   role: {
     type: String,
-    required: true,
-    enum: ['student', 'teacher'],
-    default: 'student'
+    enum: ['student', 'teacher', 'admin'],
+    required: true
   },
-  courses: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Course'
-  }],
+  studentProfile: studentProfileSchema,
+  teacherProfile: teacherProfileSchema,
   createdAt: {
     type: Date,
     default: Date.now
   }
-}, { timestamps: true });
+});
 
 // Add index for faster queries
 userSchema.index({ email: 1 });

@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import axios from '../utils/axios';
 import { Link, useLocation } from 'react-router-dom';
-import { FiHome, FiBook, FiClipboard, FiBarChart2, FiHelpCircle, FiBell } from 'react-icons/fi';
+import { FiHome, FiBook, FiClipboard, FiBarChart2, FiHelpCircle, FiBell, FiUser } from 'react-icons/fi';
 
 const Dashboard = () => {
   const [user, setUser] = useState(null);
+  const [profile, setProfile] = useState(null);
   const location = useLocation();
   const [courses] = useState([
     {
@@ -51,8 +52,12 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await axios.get('/user/dashboard');
-        setUser(res.data);
+        const [userRes, profileRes] = await Promise.all([
+          axios.get('/user/dashboard'),
+          axios.get('/api/profile/student')
+        ]);
+        setUser(userRes.data);
+        setProfile(profileRes.data);
       } catch (err) {
         console.error(err);
       }
@@ -63,6 +68,7 @@ const Dashboard = () => {
 
   const navigationItems = [
     { icon: <FiHome className="w-5 h-5" />, text: 'Dashboard', path: '/student-dashboard' },
+    { icon: <FiUser className="w-5 h-5" />, text: 'Profile', path: '/student-profile' },
     { icon: <FiBook className="w-5 h-5" />, text: 'Courses', path: '/student-courses' },
     { icon: <FiClipboard className="w-5 h-5" />, text: 'Homeworks', path: '/student-homeworks' },
     { icon: <FiBarChart2 className="w-5 h-5" />, text: 'Statistics', path: '/student-statistics' },
@@ -74,26 +80,31 @@ const Dashboard = () => {
       {/* Sidebar */}
       <div className="w-64 bg-white shadow-lg fixed h-full">
         <div className="p-6 border-b border-gray-200">
-          <div className="flex items-center space-x-4">
-            <div className="w-12 h-12 rounded-full bg-gradient-to-r from-purple-500 to-indigo-600 flex items-center justify-center text-white font-bold text-lg">
-              {user?.name?.charAt(0) || 'A'}
+          <Link to="/student-profile" className="block">
+            <div className="flex items-center space-x-4">
+              <div className="w-12 h-12 rounded-full bg-gradient-to-r from-purple-500 to-indigo-600 flex items-center justify-center text-white font-bold text-lg overflow-hidden">
+                {profile?.avatar ? (
+                  <img src={profile.avatar} alt="Profile" className="w-full h-full object-cover" />
+                ) : (
+                  user?.name?.charAt(0) || 'A'
+                )}
+              </div>
+              <div>
+                <h3 className="font-semibold text-gray-800">{user?.name || 'Loading...'}</h3>
+                <p className="text-sm text-gray-500">Student</p>
+              </div>
             </div>
-            <div>
-              <h3 className="font-semibold text-gray-800">{user?.name || 'Loading...'}</h3>
-              <p className="text-sm text-gray-500">Student</p>
-            </div>
-          </div>
+          </Link>
         </div>
         <nav className="mt-6 px-4">
           {navigationItems.map((item) => (
             <Link
               key={item.text}
               to={item.path}
-              className={`flex items-center space-x-3 px-4 py-3 rounded-lg mb-2 transition-colors duration-150 ${
-                location.pathname === item.path
-                  ? 'bg-gradient-to-r from-purple-500 to-indigo-600 text-white'
-                  : 'text-gray-600 hover:bg-gray-50'
-              }`}
+              className={`flex items-center space-x-3 px-4 py-3 rounded-lg mb-2 transition-colors duration-150 ${location.pathname === item.path
+                ? 'bg-gradient-to-r from-purple-500 to-indigo-600 text-white'
+                : 'text-gray-600 hover:bg-gray-50'
+                }`}
             >
               {item.icon}
               <span>{item.text}</span>
@@ -108,6 +119,8 @@ const Dashboard = () => {
           <h1 className="text-2xl font-bold text-gray-800">Welcome back, {user?.name || 'Student'}!</h1>
           <p className="text-gray-600">Here's what's happening with your courses today.</p>
         </div>
+
+
 
         {/* Courses Section */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">

@@ -9,6 +9,8 @@ import TeacherAttendance from './pages/teacher/Attendance';
 import TeacherHolidays from './pages/teacher/Holidays';
 import TeacherSchedules from './pages/teacher/Schedules';
 import TeacherSupport from './pages/teacher/Support';
+import TeacherProfile from './components/TeacherProfile';
+import StudentProfile from './components/StudentProfile';
 import Courses from './pages/Courses';
 import Homeworks from './pages/Homeworks';
 import Statistics from './pages/Statistics';
@@ -28,16 +30,18 @@ function App() {
             <Route path="/" element={<Landing />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
-            
+
             {/* Protected routes for students */}
             <Route path="/student-dashboard" element={<ProtectedRoute allowedRoles={['student']}><Dashboard /></ProtectedRoute>} />
+            <Route path="/student-profile" element={<ProtectedRoute allowedRoles={['student']}><StudentProfile /></ProtectedRoute>} />
             <Route path="/student-courses" element={<ProtectedRoute allowedRoles={['student']}><Courses /></ProtectedRoute>} />
             <Route path="/student-homeworks" element={<ProtectedRoute allowedRoles={['student']}><Homeworks /></ProtectedRoute>} />
             <Route path="/student-statistics" element={<ProtectedRoute allowedRoles={['student']}><Statistics /></ProtectedRoute>} />
             <Route path="/student-support" element={<ProtectedRoute allowedRoles={['student']}><Support /></ProtectedRoute>} />
-            
+
             {/* Protected routes for teachers */}
             <Route path="/teacher-dashboard" element={<ProtectedRoute allowedRoles={['teacher']}><TeacherDashboard /></ProtectedRoute>} />
+            <Route path="/teacher-profile" element={<ProtectedRoute allowedRoles={['teacher']}><TeacherProfile /></ProtectedRoute>} />
             <Route path="/teacher-dashboard/homework" element={<ProtectedRoute allowedRoles={['teacher']}><TeacherHomework /></ProtectedRoute>} />
             <Route path="/teacher-dashboard/attendance" element={<ProtectedRoute allowedRoles={['teacher']}><TeacherAttendance /></ProtectedRoute>} />
             <Route path="/teacher-dashboard/holidays" element={<ProtectedRoute allowedRoles={['teacher']}><TeacherHolidays /></ProtectedRoute>} />
