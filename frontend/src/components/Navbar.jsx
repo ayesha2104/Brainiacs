@@ -1,18 +1,49 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
 function Navbar() {
   const navigate = useNavigate();
   const token = localStorage.getItem('token');
-  
+  const [userRole, setUserRole] = useState(null);
+
+  useEffect(() => {
+    // Get the user role from localStorage
+    if (token) {
+      const role = localStorage.getItem('role');
+      setUserRole(role);
+    }
+  }, [token]);
+
   const handleLogout = () => {
     localStorage.removeItem('token');
+    localStorage.removeItem('role');
+    localStorage.removeItem('user');
     navigate('/');
   };
-  
+
+  const handleBrainiacsClick = (e) => {
+    e.preventDefault();
+
+    if (!token) {
+      navigate('/');
+      return;
+    }
+
+    if (userRole === 'student') {
+      navigate('/student-dashboard');
+    } else if (userRole === 'teacher') {
+      navigate('/teacher-dashboard');
+    } else {
+      // Fallback if role is not properly set
+      navigate('/login');
+    }
+  };
+
   return (
     <nav className="bg-gradient-to-r from-blue-500 to-purple-600 shadow-sm p-4 flex justify-between items-center">
-      <Link to="/" className="text-2xl font-bold text-white">Brainiacs</Link>
+      <a href="#" onClick={handleBrainiacsClick} className="text-2xl font-bold text-white">
+        Brainiacs
+      </a>
       <ul className="flex gap-6 items-center">
         {token ? (
           <>

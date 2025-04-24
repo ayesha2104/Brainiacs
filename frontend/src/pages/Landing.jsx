@@ -1,17 +1,34 @@
-// src/pages/Landing.jsx
-
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import Lottie from 'lottie-react';
 
 // Import your Lottie animation JSON files
-// You'll need to download these files and add them to your project
 import studyAnimation from '../assets/study-animation.json';
 import collaborationAnimation from '../assets/collaboration-animation.json';
 import progressAnimation from '../assets/progress-animation.json';
 import heroAnimation from '../assets/hero-animation.json';
 
 function Landing() {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // Check if user is logged in by looking for the token
+    const token = localStorage.getItem('token');
+    if (token) {
+      // Get user role and redirect to appropriate dashboard
+      const role = localStorage.getItem('role');
+
+      if (role === 'student') {
+        navigate('/student-dashboard');
+      } else if (role === 'teacher') {
+        navigate('/teacher-dashboard');
+      } else {
+        // If role is not properly set but token exists
+        navigate('/login'); // Redirect to login as fallback
+      }
+    }
+  }, [navigate]);
+
   return (
     <div>
       {/* Hero Section */}
@@ -65,7 +82,7 @@ function Landing() {
                 Collaborate with like-minded students, share notes, and study together in real-time.
               </p>
             </div>
-            
+
             {/* Feature 2 */}
             <div className="bg-white/20 backdrop-blur-sm p-6 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 border border-white/30 group hover:transform hover:scale-105">
               <div className="h-48 mb-4 overflow-hidden">
@@ -76,7 +93,7 @@ function Landing() {
                 Set goals, track your study progress, and celebrate your achievements.
               </p>
             </div>
-            
+
             {/* Feature 3 */}
             <div className="bg-white/20 backdrop-blur-sm p-6 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 border border-white/30 group hover:transform hover:scale-105">
               <div className="h-48 mb-4 overflow-hidden">
@@ -161,7 +178,7 @@ function Landing() {
               <p className="font-bold text-xl">Brainiacs</p>
               <p className="text-sm mt-1">&copy; 2025 Brainiacs. All rights reserved.</p>
             </div>
-            
+
             <div className="flex flex-col md:flex-row gap-8">
               <div>
                 <h4 className="font-semibold mb-2">Links</h4>
@@ -170,7 +187,7 @@ function Landing() {
                   <a href="#" className="text-white hover:text-blue-200 text-sm">Terms of Service</a>
                 </div>
               </div>
-              
+
               <div>
                 <h4 className="font-semibold mb-2">Connect with us</h4>
                 <div className="flex gap-4">
