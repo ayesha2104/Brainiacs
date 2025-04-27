@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import fs from 'fs';
 
 import authRoutes from './routes/auth.js';
 import userRoutes from './routes/user.js';
@@ -33,6 +34,13 @@ const MONGO_URI = process.env.MONGO_URI;
 
 // Get the directory name of the current module
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+// Create uploads directory if it doesn't exist
+const uploadsDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadsDir)) {
+  console.log('📁 Creating uploads directory');
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
 
 // CORS configuration
 app.use(cors({

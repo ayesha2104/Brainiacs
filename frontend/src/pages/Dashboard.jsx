@@ -52,14 +52,39 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [userRes, profileRes] = await Promise.all([
-          axios.get('/user/dashboard'),
-          axios.get('/api/profile/student')
-        ]);
-        setUser(userRes.data);
-        setProfile(profileRes.data);
+        // Try to get data from localStorage first for immediate display
+        const storedUser = localStorage.getItem('user');
+        if (storedUser) {
+          try {
+            const localUserData = JSON.parse(storedUser);
+            setUser(localUserData);
+            if (localUserData.studentProfile) {
+              setProfile(localUserData.studentProfile);
+            }
+          } catch (e) {
+            console.error('Error parsing localStorage user data:', e);
+          }
+        }
+        
+        // Then fetch fresh data from the API
+        try {
+          // Get user data from API
+          const userRes = await axios.get('/auth/me');
+          if (userRes.data) {
+            setUser(userRes.data);
+          }
+          
+          // Get profile data from API
+          const profileRes = await axios.get('/profile/student');
+          if (profileRes.data) {
+            setProfile(profileRes.data);
+          }
+        } catch (apiError) {
+          console.error('API data fetch error:', apiError);
+          // We already have localStorage data as fallback if available
+        }
       } catch (err) {
-        console.error(err);
+        console.error('Dashboard data fetch error:', err);
       }
     };
 
@@ -75,6 +100,35 @@ const Dashboard = () => {
     { icon: <FiHelpCircle className="w-5 h-5" />, text: 'Need Support', path: '/student-support' },
   ];
 
+  // Function to render the avatar with consistent logic between components
+  const renderAvatar = () => {
+    if (!profile?.avatar) {
+      return user?.name?.charAt(0) || 'A';
+    }
+
+    // Create a proper URL for the image
+    let avatarUrl;
+    if (profile.avatar.startsWith('http')) {
+      // Already a full URL
+      avatarUrl = profile.avatar;
+    } else if (profile.avatar.startsWith('/uploads')) {
+      // Remove the baseURL and just use the path directly since we're accessing it from the frontend
+      avatarUrl = `http://localhost:5000${profile.avatar}`;
+    } else {
+      // Fallback, use the baseURL
+      avatarUrl = `${axios.defaults.baseURL}${profile.avatar}`;
+    }
+
+    return (
+      <img src={avatarUrl} alt="Profile" className="w-full h-full object-cover" 
+           onError={(e) => {
+             e.target.onerror = null;
+             e.target.style.display = 'none';
+             console.error('Failed to load avatar:', avatarUrl);
+           }} />
+    );
+  };
+
   return (
     <div className="flex min-h-screen bg-gray-100">
       {/* Sidebar */}
@@ -83,11 +137,7 @@ const Dashboard = () => {
           <Link to="/student-profile" className="block">
             <div className="flex items-center space-x-4">
               <div className="w-12 h-12 rounded-full bg-gradient-to-r from-purple-500 to-indigo-600 flex items-center justify-center text-white font-bold text-lg overflow-hidden">
-                {profile?.avatar ? (
-                  <img src={profile.avatar} alt="Profile" className="w-full h-full object-cover" />
-                ) : (
-                  user?.name?.charAt(0) || 'A'
-                )}
+                {profile?.avatar ? renderAvatar() : (user?.name?.charAt(0) || 'A')}
               </div>
               <div>
                 <h3 className="font-semibold text-gray-800">{user?.name || 'Loading...'}</h3>
@@ -119,8 +169,6 @@ const Dashboard = () => {
           <h1 className="text-2xl font-bold text-gray-800">Welcome back, {user?.name || 'Student'}!</h1>
           <p className="text-gray-600">Here's what's happening with your courses today.</p>
         </div>
-
-
 
         {/* Courses Section */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">

@@ -1,0 +1,73 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id               String             @id @default(uuid())
+  email            String             @unique
+  password         String
+  name             String
+  role             Role               @default(STUDENT)
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  courses          CourseEnrollment[]
+  assignedHomework Homework[]         @relation("HomeworkAssignedTo")
+  createdHomework  Homework[]         @relation("HomeworkCreatedBy")
+  teachingCourses  Course[]           @relation("CourseTeacher")
+}
+
+model Course {
+  id          String             @id @default(uuid())
+  title       String
+  description String?
+  teacherId   String
+  teacher     User               @relation("CourseTeacher", fields: [teacherId], references: [id])
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+  enrollments CourseEnrollment[]
+  homework    Homework[]
+}
+
+model CourseEnrollment {
+  id        String   @id @default(uuid())
+  userId    String
+  courseId  String
+  user      User     @relation(fields: [userId], references: [id])
+  course    Course   @relation(fields: [courseId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@unique([userId, courseId])
+}
+
+model Homework {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  dueDate     DateTime
+  courseId    String
+  teacherId   String
+  studentId   String
+  course      Course   @relation(fields: [courseId], references: [id])
+  teacher     User     @relation("HomeworkCreatedBy", fields: [teacherId], references: [id])
+  student     User     @relation("HomeworkAssignedTo", fields: [studentId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+enum Role {
+  STUDENT
+  TEACHER
+  ADMIN
+}

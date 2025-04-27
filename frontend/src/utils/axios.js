@@ -14,11 +14,9 @@ instance.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
-    console.log(`🚀 Making ${config.method.toUpperCase()} request to ${config.url}`);
     return config;
   },
   (error) => {
-    console.error('Request error:', error);
     return Promise.reject(error);
   }
 );
@@ -26,24 +24,20 @@ instance.interceptors.request.use(
 // Add a response interceptor to handle errors
 instance.interceptors.response.use(
   (response) => {
-    console.log(`✅ Response from ${response.config.url}:`, response.status);
     return response;
   },
   (error) => {
-    console.error('Response error:', {
-      url: error.config?.url,
-      status: error.response?.status,
-      message: error.response?.data?.message || error.message
-    });
-
     if (error.response?.status === 401) {
-      console.log('🔒 Unauthorized access - redirecting to login');
+      // Clear auth data
       localStorage.removeItem('token');
-      window.location.href = '/login';
-    } else if (error.response?.status === 403) {
-      console.log('🚫 Access forbidden - insufficient permissions');
+      localStorage.removeItem('role');
+      localStorage.removeItem('user');
+      
+      // Only redirect if not already on login page
+      if (window.location.pathname !== '/login') {
+        window.location.href = '/login';
+      }
     }
-
     return Promise.reject(error);
   }
 );

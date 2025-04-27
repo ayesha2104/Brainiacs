@@ -28,73 +28,97 @@ function StudentProfile() {
     const fetchProfile = async () => {
         try {
             setLoading(true);
-            // First get the user data
-            const userResponse = await axios.get('/auth/me');
-            console.log('User data received:', userResponse.data);
-
-            if (!userResponse.data) {
-                throw new Error('Failed to fetch user data');
+            
+            // Try to get data from localStorage first
+            const storedUser = localStorage.getItem('user');
+            let localUserData = null;
+            
+            if (storedUser) {
+                try {
+                    localUserData = JSON.parse(storedUser);
+                    console.log('User data from localStorage:', localUserData);
+                } catch (e) {
+                    console.error('Error parsing localStorage user data:', e);
+                }
             }
-
-            // Save user data regardless of profile fetch success
-            const userData = userResponse.data;
-
+            
+            // First get the user data from API
             try {
-                // Then get the profile data
-                const profileResponse = await axios.get('/api/profile/student');
-                console.log('Profile data received:', profileResponse.data);
-
-                // Combine user data with profile data
-                const profileData = profileResponse.data || {};
-
-                setProfile({
-                    name: userData.name || '',
-                    email: userData.email || '',
-                    studentId: profileData.studentId || userData.studentProfile?.studentId || '',
-                    semester: profileData.semester || userData.studentProfile?.semester || '',
-                    course: profileData.course || userData.studentProfile?.course || '',
-                    degree: profileData.degree || userData.studentProfile?.degree || '',
-                    bio: profileData.bio || userData.studentProfile?.bio || '',
-                    interests: profileData.interests || userData.studentProfile?.interests || [],
-                    coursesCompleted: profileData.coursesCompleted || userData.studentProfile?.coursesCompleted || 0,
-                    studyHours: profileData.studyHours || userData.studentProfile?.studyHours || 0,
-                    avatar: profileData.avatar || userData.studentProfile?.avatar || null
-                });
-            } catch (profileError) {
-                console.error('Profile API error:', profileError);
-
-                // Fall back to user data if profile fetch fails
-                if (userData.studentProfile) {
-                    const fallbackProfile = userData.studentProfile;
+                const userResponse = await axios.get('/auth/me');
+                console.log('User data received from API:', userResponse.data);
+                
+                if (!userResponse.data) {
+                    throw new Error('Failed to fetch user data from API');
+                }
+                
+                // Save user data regardless of profile fetch success
+                const userData = userResponse.data;
+                
+                try {
+                    // Then get the profile data
+                    const profileResponse = await axios.get('/profile/student');
+                    console.log('Profile data received:', profileResponse.data);
+                    
+                    // Combine user data with profile data
+                    const profileData = profileResponse.data || {};
+                    
                     setProfile({
-                        name: userData.name || '',
+                        name: userData.name || profileData.name || '',
                         email: userData.email || '',
-                        studentId: fallbackProfile.studentId || '',
-                        semester: fallbackProfile.semester || '',
-                        course: fallbackProfile.course || '',
-                        degree: fallbackProfile.degree || '',
-                        bio: fallbackProfile.bio || '',
-                        interests: fallbackProfile.interests || [],
-                        coursesCompleted: fallbackProfile.coursesCompleted || 0,
-                        studyHours: fallbackProfile.studyHours || 0,
-                        avatar: fallbackProfile.avatar || null
+                        studentId: profileData.studentId || userData.studentProfile?.studentId || '',
+                        semester: profileData.semester || userData.studentProfile?.semester || '',
+                        course: profileData.course || userData.studentProfile?.course || '',
+                        degree: profileData.degree || userData.studentProfile?.degree || '',
+                        bio: profileData.bio || userData.studentProfile?.bio || '',
+                        interests: profileData.interests || userData.studentProfile?.interests || [],
+                        coursesCompleted: profileData.coursesCompleted || userData.studentProfile?.coursesCompleted || 0,
+                        studyHours: profileData.studyHours || userData.studentProfile?.studyHours || 0,
+                        avatar: profileData.avatar || userData.studentProfile?.avatar || null
+                    });
+                } catch (profileError) {
+                    console.error('Profile API error:', profileError);
+                    
+                    // Fall back to user data if profile fetch fails
+                    if (userData.studentProfile) {
+                        const fallbackProfile = userData.studentProfile;
+                        setProfile({
+                            name: userData.name || '',
+                            email: userData.email || '',
+                            studentId: fallbackProfile.studentId || '',
+                            semester: fallbackProfile.semester || '',
+                            course: fallbackProfile.course || '',
+                            degree: fallbackProfile.degree || '',
+                            bio: fallbackProfile.bio || '',
+                            interests: fallbackProfile.interests || [],
+                            coursesCompleted: fallbackProfile.coursesCompleted || 0,
+                            studyHours: fallbackProfile.studyHours || 0,
+                            avatar: fallbackProfile.avatar || null
+                        });
+                    } else {
+                        throw new Error('No profile data available from API');
+                    }
+                }
+            } catch (apiError) {
+                console.error('API fetch error:', apiError);
+                
+                // Fall back to localStorage if API fails
+                if (localUserData) {
+                    console.log('Using localStorage data as fallback');
+                    setProfile({
+                        name: localUserData.name || '',
+                        email: localUserData.email || '',
+                        studentId: localUserData.studentProfile?.studentId || '',
+                        semester: localUserData.studentProfile?.semester || '',
+                        course: localUserData.studentProfile?.course || '',
+                        degree: localUserData.studentProfile?.degree || '',
+                        bio: localUserData.studentProfile?.bio || '',
+                        interests: localUserData.studentProfile?.interests || [],
+                        coursesCompleted: localUserData.studentProfile?.coursesCompleted || 0,
+                        studyHours: localUserData.studentProfile?.studyHours || 0,
+                        avatar: localUserData.studentProfile?.avatar || null
                     });
                 } else {
-                    // Set minimal profile with just user data
-                    setProfile({
-                        name: userData.name || '',
-                        email: userData.email || '',
-                        studentId: '',
-                        semester: '',
-                        course: '',
-                        degree: '',
-                        bio: '',
-                        interests: [],
-                        coursesCompleted: 0,
-                        studyHours: 0,
-                        avatar: null
-                    });
-                    toast.error('Could not load complete profile. Some data may be missing.');
+                    toast.error('Failed to load profile. Please try logging in again.');
                 }
             }
         } catch (error) {
@@ -123,19 +147,47 @@ function StudentProfile() {
         const formData = new FormData();
         formData.append('avatar', file);
         setUploading(true);
+        
+        // Show loading toast that will be dismissed when upload completes
+        const loadingToast = toast.loading('Uploading profile picture...');
 
         try {
-            const response = await axios.post('/api/profile/student/avatar', formData, {
+            const response = await axios.post('/profile/student/avatar', formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
 
+            console.log('Avatar upload complete, server response:', response.data);
+
             if (response.data && response.data.avatar) {
-                setProfile(prev => ({ ...prev, avatar: response.data.avatar }));
-                toast.success('Avatar updated successfully');
+                // Dismiss loading toast
+                toast.dismiss(loadingToast);
+                
+                const avatarPath = response.data.avatar;
+                console.log('New avatar path:', avatarPath);
+                
+                setProfile(prev => ({ ...prev, avatar: avatarPath }));
+                toast.success('Profile picture updated successfully');
+                
+                // Update user in localStorage if it exists
+                try {
+                    const storedUser = localStorage.getItem('user');
+                    if (storedUser) {
+                        const userData = JSON.parse(storedUser);
+                        if (userData.studentProfile) {
+                            userData.studentProfile.avatar = avatarPath;
+                            localStorage.setItem('user', JSON.stringify(userData));
+                            console.log('Updated avatar in localStorage');
+                        }
+                    }
+                } catch (e) {
+                    console.error('Error updating avatar in localStorage:', e);
+                }
             }
         } catch (error) {
             console.error('Avatar upload error:', error);
-            toast.error('Failed to upload avatar');
+            // Dismiss loading toast
+            toast.dismiss(loadingToast);
+            toast.error('Failed to upload profile picture. Please try again.');
         } finally {
             setUploading(false);
         }
@@ -155,12 +207,29 @@ function StudentProfile() {
             };
 
             console.log('Sending profile update with data:', updateData);
-            const response = await axios.put('/api/profile/student', updateData);
+            const response = await axios.put('/profile/student', updateData);
 
             if (response.data) {
                 console.log('Profile update response:', response.data);
                 toast.success('Profile updated successfully');
                 setIsEditing(false);
+
+                // Update user in localStorage if it exists
+                try {
+                    const storedUser = localStorage.getItem('user');
+                    if (storedUser) {
+                        const userData = JSON.parse(storedUser);
+                        userData.name = profile.name; // Update the name in the user object
+                        if (!userData.studentProfile) {
+                            userData.studentProfile = {};
+                        }
+                        userData.studentProfile = {...userData.studentProfile, ...response.data};
+                        localStorage.setItem('user', JSON.stringify(userData));
+                        console.log('Updated user in localStorage');
+                    }
+                } catch (e) {
+                    console.error('Error updating localStorage:', e);
+                }
 
                 setTimeout(() => {
                     fetchProfile();
@@ -181,9 +250,21 @@ function StudentProfile() {
             return <span className="text-4xl">{profile.name?.charAt(0)}</span>;
         }
 
-        const avatarUrl = profile.avatar.startsWith('http')
-            ? profile.avatar
-            : `/api${profile.avatar}`;
+        // Create a proper URL for the image
+        // This will handle paths that are returned from the backend like "/uploads/avatars/filename.jpg"
+        let avatarUrl;
+        if (profile.avatar.startsWith('http')) {
+            // Already a full URL
+            avatarUrl = profile.avatar;
+        } else if (profile.avatar.startsWith('/uploads')) {
+            // Remove the baseURL and just use the path directly since we're accessing it from the frontend
+            avatarUrl = `http://localhost:5000${profile.avatar}`;
+        } else {
+            // Fallback, use the baseURL
+            avatarUrl = `${axios.defaults.baseURL}${profile.avatar}`;
+        }
+
+        console.log('Rendering avatar with URL:', avatarUrl);
 
         return (
             <img
@@ -193,7 +274,7 @@ function StudentProfile() {
                 onError={(e) => {
                     e.target.onerror = null;
                     e.target.src = ''; // Reset to empty
-                    console.error('Failed to load avatar');
+                    console.error('Failed to load avatar:', avatarUrl);
                 }}
             />
         );
@@ -213,7 +294,11 @@ function StudentProfile() {
                 <div className="flex justify-between items-center mb-6">
                     <h2 className="text-2xl font-bold text-gray-800">Student Profile</h2>
                     <button
-                        onClick={() => setIsEditing(!isEditing)}
+                        type="button"
+                        onClick={() => {
+                            console.log('Edit button clicked, current state:', isEditing);
+                            setIsEditing(!isEditing);
+                        }}
                         className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded"
                     >
                         {isEditing ? 'Cancel' : 'Edit Profile'}
@@ -244,8 +329,9 @@ function StudentProfile() {
                                 <input
                                     type="text"
                                     value={profile.name}
-                                    className="w-full p-2 border rounded bg-gray-100"
-                                    disabled
+                                    onChange={(e) => setProfile({ ...profile, name: e.target.value })}
+                                    className="w-full p-2 border rounded"
+                                    required
                                 />
                             </div>
                             <div>
@@ -403,4 +489,4 @@ function StudentProfile() {
     );
 }
 
-export default StudentProfile; 
+export default StudentProfile;

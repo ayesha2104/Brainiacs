@@ -17,19 +17,37 @@ function Login() {
     setLoading(true);
 
     try {
+      console.log('Sending login data:', { email, password, role });
       const response = await axios.post('/auth/login', { email, password, role });
       
-      localStorage.setItem('token', response.data.token);
-      localStorage.setItem('role', role);
-      localStorage.setItem('user', JSON.stringify(response.data.user));
-      
-      if (role === 'student') {
-        navigate('/student-dashboard');
+      if (response.data.token) {
+        console.log('Login response:', response.data);
+        // Store auth data
+        localStorage.setItem('token', response.data.token);
+        localStorage.setItem('role', response.data.user.role);
+        localStorage.setItem('user', JSON.stringify(response.data.user));
+        
+        // Verify storage
+        console.log('Stored token:', localStorage.getItem('token'));
+        console.log('Stored role:', localStorage.getItem('role'));
+        console.log('Stored user:', localStorage.getItem('user'));
+        
+        // Set axios default headers
+        axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.token}`;
+        
+        // Redirect based on role
+        if (response.data.user.role === 'student') {
+          navigate('/student-dashboard');
+        } else {
+          navigate('/teacher-dashboard');
+        }
       } else {
-        navigate('/teacher-dashboard');
+        throw new Error('No token received');
       }
     } catch (error) {
-      setError(error.response?.data?.message || 'Login failed. Please check your credentials and try again.');
+      console.error('Login error:', error);
+      console.error('Error response:', error.response?.data);
+      setError(error.response?.data?.message || error.response?.data?.error || 'Login failed. Please check your credentials and try again.');
     } finally {
       setLoading(false);
     }

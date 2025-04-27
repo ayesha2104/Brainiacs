@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
+import axios from '../utils/axios';
 
 function TeacherProfile() {
     const [profile, setProfile] = useState({
@@ -25,19 +26,100 @@ function TeacherProfile() {
 
     const fetchProfile = async () => {
         try {
-            const response = await fetch('/api/profile/teacher', {
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+            setLoading(true);
+            
+            // Try to get data from localStorage first
+            const storedUser = localStorage.getItem('user');
+            let localUserData = null;
+            
+            if (storedUser) {
+                try {
+                    localUserData = JSON.parse(storedUser);
+                    console.log('User data from localStorage:', localUserData);
+                } catch (e) {
+                    console.error('Error parsing localStorage user data:', e);
                 }
-            });
-            const data = await response.json();
-            if (response.ok) {
-                setProfile(data || {});
-            } else {
-                toast.error(data.message || 'Failed to fetch profile');
             }
-        } catch {
-            toast.error('Failed to fetch profile');
+            
+            // Try fetching from API first
+            try {
+                // Get user data from auth endpoint
+                const userResponse = await axios.get('/auth/me');
+                console.log('User data received from API:', userResponse.data);
+                
+                if (!userResponse.data) {
+                    throw new Error('Failed to fetch user data from API');
+                }
+                
+                // Save user data
+                const userData = userResponse.data;
+                
+                try {
+                    // Get profile data from profile endpoint
+                    const profileResponse = await axios.get('/profile/teacher');
+                    console.log('Profile data received:', profileResponse.data);
+                    
+                    // Combine profile data
+                    const profileData = profileResponse.data || {};
+                    
+                    setProfile({
+                        name: userData.name || profileData.name || '',
+                        email: userData.email || '',
+                        teacherId: profileData.teacherId || userData.teacherProfile?.teacherId || '',
+                        department: profileData.department || userData.teacherProfile?.department || '',
+                        specialization: profileData.specialization || userData.teacherProfile?.specialization || '',
+                        qualifications: profileData.qualifications || userData.teacherProfile?.qualifications || [],
+                        experience: profileData.experience || userData.teacherProfile?.experience || '',
+                        bio: profileData.bio || userData.teacherProfile?.bio || '',
+                        courses: profileData.courses || userData.teacherProfile?.courses || [],
+                        avatar: profileData.avatar || userData.teacherProfile?.avatar || '',
+                    });
+                } catch (profileError) {
+                    console.error('Profile API error:', profileError);
+                    
+                    // Fall back to user data if profile fetch fails
+                    if (userData.teacherProfile) {
+                        setProfile({
+                            name: userData.name || '',
+                            email: userData.email || '',
+                            teacherId: userData.teacherProfile.teacherId || '',
+                            department: userData.teacherProfile.department || '',
+                            specialization: userData.teacherProfile.specialization || '',
+                            qualifications: userData.teacherProfile.qualifications || [],
+                            experience: userData.teacherProfile.experience || '',
+                            bio: userData.teacherProfile.bio || '',
+                            courses: userData.teacherProfile.courses || [],
+                            avatar: userData.teacherProfile.avatar || '',
+                        });
+                    } else {
+                        throw new Error('No profile data available from API');
+                    }
+                }
+            } catch (apiError) {
+                console.error('API fetch error:', apiError);
+                
+                // Fall back to localStorage if API fails
+                if (localUserData) {
+                    console.log('Using localStorage data as fallback');
+                    setProfile({
+                        name: localUserData.name || '',
+                        email: localUserData.email || '',
+                        teacherId: localUserData.teacherProfile?.teacherId || '',
+                        department: localUserData.teacherProfile?.department || '',
+                        specialization: localUserData.teacherProfile?.specialization || '',
+                        qualifications: localUserData.teacherProfile?.qualifications || [],
+                        experience: localUserData.teacherProfile?.experience || '',
+                        bio: localUserData.teacherProfile?.bio || '',
+                        courses: localUserData.teacherProfile?.courses || [],
+                        avatar: localUserData.teacherProfile?.avatar || '',
+                    });
+                } else {
+                    toast.error('Failed to load profile. Please try logging in again.');
+                }
+            }
+        } catch (error) {
+            console.error('Profile fetch error:', error);
+            toast.error('Failed to load profile. Please try logging in again.');
         } finally {
             setLoading(false);
         }
@@ -47,28 +129,61 @@ function TeacherProfile() {
         const file = e.target.files[0];
         if (!file) return;
 
+        if (file.size > 5 * 1024 * 1024) {
+            toast.error('File size should be less than 5MB');
+            return;
+        }
+
+        const validTypes = ['image/jpeg', 'image/png', 'image/gif'];
+        if (!validTypes.includes(file.type)) {
+            toast.error('Please upload a valid image file (JPEG, PNG, or GIF)');
+            return;
+        }
+
         const formData = new FormData();
         formData.append('avatar', file);
         setUploading(true);
+        
+        // Show loading toast that will be dismissed when upload completes
+        const loadingToast = toast.loading('Uploading profile picture...');
 
         try {
-            const response = await fetch('/api/profile/teacher/avatar', {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                },
-                body: formData
+            const response = await axios.post('/profile/teacher/avatar', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
             });
-            const data = await response.json();
 
-            if (response.ok) {
-                setProfile(prev => ({ ...prev, avatar: data.avatar }));
-                toast.success('Avatar updated successfully');
-            } else {
-                toast.error(data.message || 'Failed to upload avatar');
+            console.log('Teacher avatar upload complete, server response:', response.data);
+
+            if (response.data && response.data.avatar) {
+                // Dismiss loading toast
+                toast.dismiss(loadingToast);
+                
+                const avatarPath = response.data.avatar;
+                console.log('New teacher avatar path:', avatarPath);
+                
+                setProfile(prev => ({ ...prev, avatar: avatarPath }));
+                toast.success('Profile picture updated successfully');
+                
+                // Update user in localStorage if it exists
+                try {
+                    const storedUser = localStorage.getItem('user');
+                    if (storedUser) {
+                        const userData = JSON.parse(storedUser);
+                        if (userData.teacherProfile) {
+                            userData.teacherProfile.avatar = avatarPath;
+                            localStorage.setItem('user', JSON.stringify(userData));
+                            console.log('Updated avatar in localStorage');
+                        }
+                    }
+                } catch (e) {
+                    console.error('Error updating avatar in localStorage:', e);
+                }
             }
-        } catch {
-            toast.error('Failed to upload avatar');
+        } catch (error) {
+            console.error('Avatar upload error:', error);
+            // Dismiss loading toast
+            toast.dismiss(loadingToast);
+            toast.error('Failed to upload profile picture. Please try again.');
         } finally {
             setUploading(false);
         }
@@ -77,24 +192,50 @@ function TeacherProfile() {
     const handleUpdate = async (e) => {
         e.preventDefault();
         try {
-            const response = await fetch('/api/profile/teacher', {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                },
-                body: JSON.stringify(profile)
-            });
-            const data = await response.json();
-
-            if (response.ok) {
+            const response = await axios.put('/profile/teacher', profile);
+            console.log('Profile update response:', response.data);
+            
+            if (response.data) {
                 toast.success('Profile updated successfully');
                 setIsEditing(false);
-            } else {
-                toast.error(data.message || 'Failed to update profile');
+                
+                // Update user in localStorage if it exists
+                try {
+                    const storedUser = localStorage.getItem('user');
+                    if (storedUser) {
+                        const userData = JSON.parse(storedUser);
+                        userData.teacherProfile = response.data;
+                        localStorage.setItem('user', JSON.stringify(userData));
+                        console.log('Updated user in localStorage');
+                    }
+                } catch (e) {
+                    console.error('Error updating localStorage:', e);
+                }
+                
+                // Refresh profile data
+                setTimeout(() => {
+                    fetchProfile();
+                }, 500);
             }
-        } catch {
-            toast.error('Failed to update profile');
+        } catch (error) {
+            console.error('Profile update error:', error);
+            toast.error(error.response?.data?.message || 'Failed to update profile');
+        }
+    };
+
+    // Helper function to get the correct avatar URL
+    const getAvatarUrl = (avatarPath) => {
+        if (!avatarPath) return '';
+        
+        if (avatarPath.startsWith('http')) {
+            // Already a full URL
+            return avatarPath;
+        } else if (avatarPath.startsWith('/uploads')) {
+            // Direct server path
+            return `http://localhost:5000${avatarPath}`;
+        } else {
+            // Fallback
+            return `${axios.defaults.baseURL}${avatarPath}`;
         }
     };
 
@@ -108,7 +249,11 @@ function TeacherProfile() {
                 <div className="flex justify-between items-center mb-6">
                     <h2 className="text-2xl font-bold text-gray-800">Teacher Profile</h2>
                     <button
-                        onClick={() => setIsEditing(!isEditing)}
+                        type="button"
+                        onClick={() => {
+                            console.log('Edit button clicked, current state:', isEditing);
+                            setIsEditing(!isEditing);
+                        }}
                         className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
                     >
                         {isEditing ? 'Cancel' : 'Edit Profile'}
@@ -121,7 +266,16 @@ function TeacherProfile() {
                             <div className="relative">
                                 <div className="w-32 h-32 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
                                     {profile.avatar ? (
-                                        <img src={profile.avatar} alt="Profile" className="w-full h-full object-cover" />
+                                        <img 
+                                            src={getAvatarUrl(profile.avatar)}
+                                            alt="Profile" 
+                                            className="w-full h-full object-cover" 
+                                            onError={(e) => {
+                                                e.target.onerror = null;
+                                                e.target.src = ''; // Reset to empty
+                                                console.error('Failed to load avatar:', profile.avatar);
+                                            }}
+                                        />
                                     ) : (
                                         <span className="text-4xl">{profile.name.charAt(0)}</span>
                                     )}
@@ -221,7 +375,16 @@ function TeacherProfile() {
                         <div className="flex items-center justify-center mb-6">
                             <div className="w-32 h-32 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
                                 {profile.avatar ? (
-                                    <img src={profile.avatar} alt="Profile" className="w-full h-full object-cover" />
+                                    <img 
+                                        src={getAvatarUrl(profile.avatar)}
+                                        alt="Profile" 
+                                        className="w-full h-full object-cover" 
+                                        onError={(e) => {
+                                            e.target.onerror = null;
+                                            e.target.src = ''; // Reset to empty
+                                            console.error('Failed to load avatar:', profile.avatar);
+                                        }}
+                                    />
                                 ) : (
                                     <span className="text-4xl">{profile.name.charAt(0)}</span>
                                 )}

@@ -53,8 +53,8 @@ router.post('/signup', async (req, res) => {
 
     // Generate token
     const token = jwt.sign(
-      { id: newUser._id, role: newUser.role },
-      process.env.JWT_SECRET,
+      { userId: newUser._id, role: newUser.role },
+      process.env.JWT_SECRET || 'your-secret-key',
       { expiresIn: '7d' }
     );
 
@@ -116,8 +116,8 @@ router.post('/login', async (req, res) => {
 
     // Generate token
     const token = jwt.sign(
-      { id: user._id, role: user.role },
-      process.env.JWT_SECRET,
+      { userId: user._id, role: user.role },
+      process.env.JWT_SECRET || 'your-secret-key',
       { expiresIn: '7d' }
     );
 
@@ -127,7 +127,8 @@ router.post('/login', async (req, res) => {
       name: user.name,
       email: user.email,
       role: user.role,
-      courses: user.courses,
+      ...(role === 'student' && { studentProfile: user.studentProfile }),
+      ...(role === 'teacher' && { teacherProfile: user.teacherProfile }),
       createdAt: user.createdAt
     };
 
@@ -150,8 +151,10 @@ router.get('/me', async (req, res) => {
       return res.status(401).json({ message: 'No token provided' });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findById(decoded.id).select('-password');
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
+    console.log('Decoded token:', decoded);  // Debug log
+    
+    const user = await User.findById(decoded.userId).select('-password');
 
     if (!user) {
       return res.status(404).json({ message: 'User not found' });

@@ -32,39 +32,91 @@ function Signup() {
     try {
       // Prepare the data according to the backend's expected structure
       const userData = {
+        name,
         email,
         password,
         role,
-        name,
-        ...(role === 'student' ? {
+        studentProfile: role === 'student' ? {
           studentId,
           course,
           semester,
-          degree
-        } : {
+          degree,
+          name
+        } : undefined,
+        teacherProfile: role === 'teacher' ? {
           teacherId,
           department,
           specialization,
-          qualifications: [], // Default empty array for new teachers
-          experience: 0 // Default experience for new teachers
-        })
+          name
+        } : undefined
       };
 
+      console.log('Sending signup data:', JSON.stringify(userData, null, 2));
+      
+      // Check if all required fields are filled in
+      if (role === 'student') {
+        console.log('Student profile validation:');
+        console.log('- studentId:', Boolean(studentId), studentId);
+        console.log('- course:', Boolean(course), course);
+        console.log('- semester:', Boolean(semester), semester);
+        console.log('- degree:', Boolean(degree), degree);
+      } else if (role === 'teacher') {
+        console.log('Teacher profile validation:');
+        console.log('- teacherId:', Boolean(teacherId), teacherId);
+        console.log('- department:', Boolean(department), department);
+        console.log('- specialization:', Boolean(specialization), specialization);
+      }
+      
+      // Log request details
+      console.log('Making signup request to:', '/auth/signup');
+      console.log('Request headers:', axios.defaults.headers);
+      
       const response = await axios.post('/auth/signup', userData);
 
+      console.log('Signup successful! Full response:', response);
+      
       if (response.data.token) {
+        console.log('Signup response:', response.data);
+        // Store auth data
         localStorage.setItem('token', response.data.token);
         localStorage.setItem('role', response.data.user.role);
         localStorage.setItem('user', JSON.stringify(response.data.user));
+        
+        // Verify storage
+        console.log('Stored token:', localStorage.getItem('token'));
+        console.log('Stored role:', localStorage.getItem('role'));
+        console.log('Stored user:', localStorage.getItem('user'));
+        
+        // Set axios default headers
+        axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.token}`;
 
         // Redirect based on role
         navigate(role === 'student' ? '/student-dashboard' : '/teacher-dashboard');
       } else {
+        console.error('No token received in response:', response.data);
         throw new Error('Registration failed - no token received');
       }
     } catch (error) {
       console.error('Signup error:', error);
-      setError(error.response?.data?.error || 'Registration failed. Please try again.');
+      console.error('Error name:', error.name);
+      console.error('Error message:', error.message);
+      console.error('Error stack:', error.stack);
+      
+      if (error.response) {
+        // The request was made and the server responded with a status code
+        console.error('Error status:', error.response.status);
+        console.error('Error headers:', error.response.headers);
+        console.error('Error data:', error.response.data);
+        console.error('Error message from data:', error.response.data?.message || error.response.data?.error);
+        setError(error.response.data?.message || error.response.data?.error || 'Registration failed. Please try again.');
+      } else if (error.request) {
+        // The request was made but no response was received
+        console.error('Error request:', error.request);
+        setError('No response received from server. Please try again.');
+      } else {
+        // Something happened in setting up the request
+        setError('Failed to send request. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
