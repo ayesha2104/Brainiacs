@@ -45,37 +45,7 @@ const ProgressChart = ({ data = [] }) => {
 const Statistics = () => {
     const [stats, setStats] = useState(null);
     const [loading, setLoading] = useState(true);
-
-    // Mock data for testing
-    const mockStats = {
-        coursesCompleted: 12,
-        coursesCompletedChange: 20,
-        averageScore: 85,
-        averageScoreChange: 5,
-        studyHours: 120,
-        studyHoursChange: -10,
-        assignmentsCompleted: 45,
-        assignmentsCompletedChange: 15,
-        progressData: [65, 70, 75, 80, 85, 82, 88],
-        recentAchievements: [
-            {
-                title: 'Completed Python Course',
-                date: '2 days ago'
-            },
-            {
-                title: 'Perfect Score in Web Dev Quiz',
-                date: '1 week ago'
-            },
-            {
-                title: 'Submitted All Assignments',
-                date: '2 weeks ago'
-            },
-            {
-                title: '100 Study Hours Milestone',
-                date: '1 month ago'
-            }
-        ]
-    };
+    const [error, setError] = useState(null);
 
     useEffect(() => {
         const fetchStats = async () => {
@@ -97,10 +67,9 @@ const Statistics = () => {
                 };
                 setStats(validatedStats);
                 setLoading(false);
-            } catch (error) {
-                console.error('Failed to fetch statistics:', error);
-                // Use mock data as fallback
-                setStats(mockStats);
+            } catch (err) {
+                console.error('Failed to fetch statistics:', err);
+                setError('Failed to load your statistics. Please try again later.');
                 setLoading(false);
             }
         };
@@ -112,6 +81,16 @@ const Statistics = () => {
         return (
             <div className="flex justify-center items-center py-20">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="container mx-auto px-4 py-8">
+                <div className="bg-white rounded-lg shadow-md p-8 text-center">
+                    <p className="text-red-600 text-lg">{error}</p>
+                </div>
             </div>
         );
     }

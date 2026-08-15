@@ -12,6 +12,9 @@ import homeworkRoutes from './routes/homeworks.js';
 import statisticsRoutes from './routes/statistics.js';
 import supportRoutes from './routes/support.js';
 import profileRoutes from './routes/profile.js';
+import scheduleRoutes from './routes/scheduleRoutes.js';
+import attendanceRoutes from './routes/attendanceRoutes.js';
+import leaveRoutes from './routes/leaveRoutes.js';
 
 const app = express();
 
@@ -59,6 +62,9 @@ app.use('/api/homeworks', homeworkRoutes);
 app.use('/api/statistics', statisticsRoutes);
 app.use('/api/support', supportRoutes);
 app.use('/api/profile', profileRoutes);
+app.use('/api/schedules', scheduleRoutes);
+app.use('/api/attendance', attendanceRoutes);
+app.use('/api/leave-applications', leaveRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {

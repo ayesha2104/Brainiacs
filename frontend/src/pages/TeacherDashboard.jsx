@@ -10,27 +10,7 @@ function TeacherDashboard() {
   const [loading, setLoading] = useState(true);
   const location = useLocation();
 
-  // Sample upcoming classes and notifications
-  const [upcomingClasses] = useState([
-    {
-      id: 1,
-      title: 'Advanced Mathematics',
-      course: 'MTH301',
-      startTime: '10:00 AM',
-      endTime: '11:30 AM',
-      room: '301',
-      students: 24
-    },
-    {
-      id: 2,
-      title: 'Introduction to Physics',
-      course: 'PHY101',
-      startTime: '1:00 PM',
-      endTime: '2:30 PM',
-      room: '205',
-      students: 32
-    }
-  ]);
+  const [todaysClasses, setTodaysClasses] = useState([]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -88,6 +68,18 @@ function TeacherDashboard() {
     };
 
     fetchData();
+
+    const fetchTodaysClasses = async () => {
+      try {
+        const res = await axios.get('/schedules');
+        const today = new Date().toLocaleDateString('en-US', { weekday: 'long' });
+        setTodaysClasses(res.data.filter((entry) => entry.day === today));
+      } catch (err) {
+        console.error('Error fetching schedules:', err);
+      }
+    };
+
+    fetchTodaysClasses();
   }, []);
 
   // Function to get the avatar URL
@@ -205,25 +197,26 @@ function TeacherDashboard() {
         {/* Today's Classes Section */}
         <div className="bg-white rounded-lg shadow p-6 mb-8">
           <h2 className="text-xl font-semibold text-gray-800 mb-4">Today's Classes</h2>
-          <div className="space-y-4">
-            {upcomingClasses.map((classItem) => (
-              <div key={classItem.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                <div className="flex items-center space-x-4">
-                  <div className="text-center">
-                    <span className="block text-sm font-semibold text-purple-600">{classItem.startTime}</span>
-                    <span className="block text-xs text-gray-500">{classItem.endTime}</span>
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-800">{classItem.title}</h3>
-                    <p className="text-sm text-gray-500">Course: {classItem.course} | Room: {classItem.room} | Students: {classItem.students}</p>
+          {todaysClasses.length === 0 ? (
+            <div className="text-gray-500">No classes scheduled for today.</div>
+          ) : (
+            <div className="space-y-4">
+              {todaysClasses.map((classItem) => (
+                <div key={classItem._id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                  <div className="flex items-center space-x-4">
+                    <div className="text-center">
+                      <span className="block text-sm font-semibold text-purple-600">{classItem.startTime}</span>
+                      <span className="block text-xs text-gray-500">{classItem.endTime}</span>
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-gray-800">{classItem.course?.title}</h3>
+                      <p className="text-sm text-gray-500">Room: {classItem.room}</p>
+                    </div>
                   </div>
                 </div>
-                <button className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
-                  View Details
-                </button>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Dynamic Outlet Section */}

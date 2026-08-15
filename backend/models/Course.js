@@ -13,6 +13,10 @@ const courseSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
+    teacher: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+    },
     startDate: {
         type: Date,
         required: true,
@@ -78,5 +82,6 @@ const courseSchema = new mongoose.Schema({
 
 courseSchema.index({ enrolledStudents: 1 });
 courseSchema.index({ status: 1 });
+courseSchema.index({ teacher: 1 });
 
 export default mongoose.model('Course', courseSchema);

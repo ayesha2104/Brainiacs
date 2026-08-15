@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { toast } from 'react-hot-toast';
+import axios from '../../utils/axios';
 
 function TeacherLeaveApplication() {
   const [formData, setFormData] = useState({
@@ -18,30 +19,9 @@ function TeacherLeaveApplication() {
     setLoading(true);
     
     try {
-      // Since the backend leave application API doesn't exist yet,
-      // we'll use local storage to simulate the functionality temporarily
-      
-      // Get existing applications from localStorage
-      const existingApplications = JSON.parse(localStorage.getItem('leaveApplications') || '[]');
-      
-      // Create a new application with ID and timestamp
-      const newApplication = {
-        id: Date.now().toString(),
-        ...formData,
-        status: 'pending',
-        submittedAt: new Date().toISOString(),
-      };
-      
-      // Add the new application to the list
-      existingApplications.push(newApplication);
-      
-      // Save back to localStorage
-      localStorage.setItem('leaveApplications', JSON.stringify(existingApplications));
-      
-      // Show success message
+      await axios.post('/leave-applications', formData);
+
       toast.success('Leave application submitted successfully!');
-      
-      // Reset form data
       setFormData({
         title: '',
         reason: '',
@@ -49,26 +29,7 @@ function TeacherLeaveApplication() {
         endDate: '',
         type: 'sick'
       });
-      
-      // Mark as submitted
       setSubmitted(true);
-      
-      // When the backend API is implemented, use the following code:
-      /*
-      const response = await axios.post('/api/teacher/leave-applications', formData);
-      
-      if (response.data) {
-        toast.success('Leave application submitted successfully!');
-        setFormData({
-          title: '',
-          reason: '',
-          startDate: '',
-          endDate: '',
-          type: 'sick'
-        });
-        setSubmitted(true);
-      }
-      */
     } catch (error) {
       console.error('Error submitting leave application:', error);
       

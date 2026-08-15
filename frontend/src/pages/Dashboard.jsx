@@ -6,48 +6,9 @@ import { FiHome, FiBook, FiClipboard, FiBarChart2, FiHelpCircle, FiBell, FiUser 
 const Dashboard = () => {
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
+  const [courses, setCourses] = useState([]);
+  const [upcomingHomeworks, setUpcomingHomeworks] = useState([]);
   const location = useLocation();
-  const [courses] = useState([
-    {
-      id: 1,
-      title: 'Modern and Contemporary 3D Design and Modeling',
-      instructor: 'Oliver Smith',
-      progress: 70,
-      lessons: '7/10',
-      assignments: '8/12',
-      lastScore: 'A',
-      time: '25h',
-      image: '🏛️'
-    },
-    {
-      id: 2,
-      title: 'The University of Sydney Positive Psychology',
-      instructor: 'James Johnson',
-      progress: 50,
-      lessons: '5/10',
-      assignments: '4/8',
-      lastScore: 'B',
-      time: '32h',
-      image: '🎯'
-    }
-  ]);
-
-  const [exams] = useState([
-    {
-      id: 1,
-      date: '10 AUGUST',
-      title: 'Psychological First Aid',
-      description: 'Learn to provide psychological first aid to people in...',
-      time: '03:00 PM'
-    },
-    {
-      id: 2,
-      date: '8 JUNE',
-      title: 'Graphic Design',
-      description: 'The goal of this specialization is to equip learners with a set...',
-      time: '11:00 AM'
-    }
-  ]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -65,7 +26,7 @@ const Dashboard = () => {
             console.error('Error parsing localStorage user data:', e);
           }
         }
-        
+
         // Then fetch fresh data from the API
         try {
           // Get user data from API
@@ -73,7 +34,7 @@ const Dashboard = () => {
           if (userRes.data) {
             setUser(userRes.data);
           }
-          
+
           // Get profile data from API
           const profileRes = await axios.get('/profile/student');
           if (profileRes.data) {
@@ -82,6 +43,20 @@ const Dashboard = () => {
         } catch (apiError) {
           console.error('API data fetch error:', apiError);
           // We already have localStorage data as fallback if available
+        }
+
+        try {
+          const coursesRes = await axios.get('/courses?enrolled=true&limit=4');
+          setCourses(coursesRes.data.data || []);
+        } catch (coursesError) {
+          console.error('Courses fetch error:', coursesError);
+        }
+
+        try {
+          const homeworksRes = await axios.get('/homeworks?status=pending&limit=3');
+          setUpcomingHomeworks(homeworksRes.data.data || []);
+        } catch (homeworksError) {
+          console.error('Homeworks fetch error:', homeworksError);
         }
       } catch (err) {
         console.error('Dashboard data fetch error:', err);
@@ -171,71 +146,71 @@ const Dashboard = () => {
         </div>
 
         {/* Courses Section */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          {courses.map((course) => (
-            <div key={course.id} className="bg-white rounded-lg shadow p-6">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center space-x-4">
-                  <span className="text-4xl">{course.image}</span>
-                  <div>
-                    <h3 className="font-semibold text-gray-800">{course.title}</h3>
-                    <p className="text-sm text-gray-500">Instructor: {course.instructor}</p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <span className="text-sm text-gray-500">Progress</span>
-                  <div className="w-24 h-2 bg-gray-200 rounded-full mt-1">
-                    <div
-                      className="h-full bg-gradient-to-r from-purple-500 to-indigo-600 rounded-full"
-                      style={{ width: `${course.progress}%` }}
-                    ></div>
-                  </div>
-                </div>
-              </div>
-              <div className="grid grid-cols-4 gap-4 text-center">
-                <div>
-                  <span className="text-sm text-gray-500">Lessons</span>
-                  <p className="font-semibold">{course.lessons}</p>
-                </div>
-                <div>
-                  <span className="text-sm text-gray-500">Assignments</span>
-                  <p className="font-semibold">{course.assignments}</p>
-                </div>
-                <div>
-                  <span className="text-sm text-gray-500">Last Score</span>
-                  <p className="font-semibold">{course.lastScore}</p>
-                </div>
-                <div>
-                  <span className="text-sm text-gray-500">Time</span>
-                  <p className="font-semibold">{course.time}</p>
-                </div>
-              </div>
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold text-gray-800">Your Courses</h2>
+            <Link to="/student-courses" className="text-sm text-purple-600 hover:underline">Browse all courses</Link>
+          </div>
+          {courses.length === 0 ? (
+            <div className="bg-white rounded-lg shadow p-6 text-gray-500">
+              You haven't enrolled in any courses yet.
             </div>
-          ))}
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {courses.map((course) => (
+                <div key={course._id} className="bg-white rounded-lg shadow p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <h3 className="font-semibold text-gray-800">{course.title}</h3>
+                      <p className="text-sm text-gray-500">Instructor: {course.instructor}</p>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-sm text-gray-500">Progress</span>
+                      <div className="w-24 h-2 bg-gray-200 rounded-full mt-1">
+                        <div
+                          className="h-full bg-gradient-to-r from-purple-500 to-indigo-600 rounded-full"
+                          style={{ width: `${course.progress || 0}%` }}
+                        ></div>
+                      </div>
+                    </div>
+                  </div>
+                  <p className="text-sm text-gray-600">{course.description}</p>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
-        {/* Exams Section */}
+        {/* Upcoming Homeworks Section */}
         <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4">Upcoming Exams</h2>
-          <div className="space-y-4">
-            {exams.map((exam) => (
-              <div key={exam.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                <div className="flex items-center space-x-4">
-                  <div className="text-center">
-                    <span className="block text-sm font-semibold text-purple-600">{exam.date}</span>
-                    <span className="block text-xs text-gray-500">{exam.time}</span>
+          <h2 className="text-xl font-semibold text-gray-800 mb-4">Upcoming Homeworks</h2>
+          {upcomingHomeworks.length === 0 ? (
+            <div className="text-gray-500">No pending homework right now.</div>
+          ) : (
+            <div className="space-y-4">
+              {upcomingHomeworks.map((hw) => (
+                <div key={hw._id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                  <div className="flex items-center space-x-4">
+                    <div className="text-center">
+                      <span className="block text-sm font-semibold text-purple-600">
+                        {new Date(hw.dueDate).toLocaleDateString('default', { day: 'numeric', month: 'short' })}
+                      </span>
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-gray-800">{hw.title}</h3>
+                      <p className="text-sm text-gray-500">{hw.courseName} — {hw.description}</p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-800">{exam.title}</h3>
-                    <p className="text-sm text-gray-500">{exam.description}</p>
-                  </div>
+                  <Link
+                    to="/student-homeworks"
+                    className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                  >
+                    View
+                  </Link>
                 </div>
-                <button className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
-                  View Details
-                </button>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>

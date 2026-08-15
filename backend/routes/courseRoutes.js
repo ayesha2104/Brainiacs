@@ -5,6 +5,9 @@ import {
     createCourse,
     updateCourse,
     deleteCourse,
+    enrollInCourse,
+    unenrollFromCourse,
+    getCourseStudents,
     getCourseSchedule,
     updateCourseSchedule,
     updateCourseProgress,
@@ -25,6 +28,14 @@ router.route('/:id')
     .put(auth, teacherOrAdmin, updateCourse)
     .delete(auth, teacherOrAdmin, deleteCourse);
 
+// Enrollment routes
+router.route('/:id/enroll')
+    .post(auth, enrollInCourse)
+    .delete(auth, unenrollFromCourse);
+
+// Roster route
+router.get('/:id/students', auth, teacherOrAdmin, getCourseStudents);
+
 // Schedule routes
 router.route('/:id/schedule')
     .get(auth, getCourseSchedule)
@@ -38,4 +49,4 @@ router.route('/:id/progress')
 router.route('/:id/hours')
     .put(auth, updateHoursSpent);
 
-export default router; 
+export default router;
