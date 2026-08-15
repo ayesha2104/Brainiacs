@@ -1,23 +1,15 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useSelector, useDispatch } from 'react-redux';
+import { logout } from '../store/authSlice';
 
 function Navbar() {
   const navigate = useNavigate();
-  const token = localStorage.getItem('token');
-  const [userRole, setUserRole] = useState(null);
-
-  useEffect(() => {
-    // Get the user role from localStorage
-    if (token) {
-      const role = localStorage.getItem('role');
-      setUserRole(role);
-    }
-  }, [token]);
+  const dispatch = useDispatch();
+  const { token, role } = useSelector((state) => state.auth);
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('role');
-    localStorage.removeItem('user');
+    dispatch(logout());
     navigate('/');
   };
 
@@ -29,9 +21,9 @@ function Navbar() {
       return;
     }
 
-    if (userRole === 'student') {
+    if (role === 'student') {
       navigate('/student-dashboard');
-    } else if (userRole === 'teacher') {
+    } else if (role === 'teacher') {
       navigate('/teacher-dashboard');
     } else {
       // Fallback if role is not properly set

@@ -1,34 +1,24 @@
 import express from 'express';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import rateLimit from 'express-rate-limit';
 import User from '../models/User.js';
+import { signupSchema, loginSchema, validateBody } from '../validators/authValidators.js';
 
 const router = express.Router();
 
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: 'Too many attempts. Please try again later.' },
+});
+
 // Signup Route
-router.post('/signup', async (req, res) => {
+router.post('/signup', authLimiter, validateBody(signupSchema), async (req, res) => {
   try {
     const { name, email, password, role, studentProfile, teacherProfile } = req.body;
-
-    // Validate required fields
-    if (!name || !email || !password || !role) {
-      return res.status(400).json({ message: 'All fields are required' });
-    }
-
-    // Validate role
-    if (!['student', 'teacher'].includes(role)) {
-      return res.status(400).json({ message: 'Invalid role' });
-    }
-
-    // Additional validation for student profile
-    if (role === 'student' && (!studentProfile?.studentId || !studentProfile?.semester || !studentProfile?.course || !studentProfile?.degree)) {
-      return res.status(400).json({ message: 'All student profile fields are required' });
-    }
-
-    // Additional validation for teacher profile
-    if (role === 'teacher' && (!teacherProfile?.teacherId || !teacherProfile?.department || !teacherProfile?.specialization)) {
-      return res.status(400).json({ message: 'All teacher profile fields are required' });
-    }
 
     // Check if user already exists
     const existingUser = await User.findOne({ email });
@@ -54,7 +44,7 @@ router.post('/signup', async (req, res) => {
     // Generate token
     const token = jwt.sign(
       { userId: newUser._id, role: newUser.role },
-      process.env.JWT_SECRET || 'your-secret-key',
+      process.env.JWT_SECRET,
       { expiresIn: '7d' }
     );
 
@@ -76,29 +66,19 @@ router.post('/signup', async (req, res) => {
     });
   } catch (err) {
     console.error('Signup error:', err);
-    res.status(500).json({ message: 'Signup failed', error: err.message });
+    res.status(500).json({ message: 'Signup failed' });
   }
 });
 
 // Login Route
-router.post('/login', async (req, res) => {
+router.post('/login', authLimiter, validateBody(loginSchema), async (req, res) => {
   try {
     const { email, password, role } = req.body;
-
-    // Validate required fields
-    if (!email || !password || !role) {
-      return res.status(400).json({ message: 'All fields are required' });
-    }
-
-    // Validate role
-    if (!['student', 'teacher'].includes(role)) {
-      return res.status(400).json({ message: 'Invalid role' });
-    }
 
     // Find user
     const user = await User.findOne({ email });
     if (!user) {
-      return res.status(400).json({ message: 'User not found' });
+      return res.status(400).json({ message: 'Invalid credentials' });
     }
 
     // Check password
@@ -117,7 +97,7 @@ router.post('/login', async (req, res) => {
     // Generate token
     const token = jwt.sign(
       { userId: user._id, role: user.role },
-      process.env.JWT_SECRET || 'your-secret-key',
+      process.env.JWT_SECRET,
       { expiresIn: '7d' }
     );
 
@@ -139,7 +119,7 @@ router.post('/login', async (req, res) => {
     });
   } catch (err) {
     console.error('Login error:', err);
-    res.status(500).json({ message: 'Login failed', error: err.message });
+    res.status(500).json({ message: 'Login failed' });
   }
 });
 
@@ -151,9 +131,7 @@ router.get('/me', async (req, res) => {
       return res.status(401).json({ message: 'No token provided' });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
-    console.log('Decoded token:', decoded);  // Debug log
-    
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const user = await User.findById(decoded.userId).select('-password');
 
     if (!user) {
@@ -162,7 +140,6 @@ router.get('/me', async (req, res) => {
 
     res.json(user);
   } catch (err) {
-    console.error('Get user error:', err);
     res.status(401).json({ message: 'Invalid token' });
   }
 });

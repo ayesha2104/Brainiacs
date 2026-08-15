@@ -10,31 +10,31 @@ import {
     updateCourseProgress,
     updateHoursSpent,
 } from '../controllers/courseController.js';
-import { protect, admin } from '../middleware/authMiddleware.js';
+import auth, { admin } from '../middleware/auth.js';
 
 const router = express.Router();
 
 // Base routes
 router.route('/')
-    .get(protect, getCourses)
-    .post(protect, admin, createCourse);
+    .get(auth, getCourses)
+    .post(auth, admin, createCourse);
 
 router.route('/:id')
-    .get(protect, getCourseById)
-    .put(protect, admin, updateCourse)
-    .delete(protect, admin, deleteCourse);
+    .get(auth, getCourseById)
+    .put(auth, admin, updateCourse)
+    .delete(auth, admin, deleteCourse);
 
 // Schedule routes
 router.route('/:id/schedule')
-    .get(protect, getCourseSchedule)
-    .put(protect, admin, updateCourseSchedule);
+    .get(auth, getCourseSchedule)
+    .put(auth, admin, updateCourseSchedule);
 
 // Progress routes
 router.route('/:id/progress')
-    .put(protect, updateCourseProgress);
+    .put(auth, updateCourseProgress);
 
 // Hours spent routes
 router.route('/:id/hours')
-    .put(protect, updateHoursSpent);
+    .put(auth, updateHoursSpent);
 
 export default router; 

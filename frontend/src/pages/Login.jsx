@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import axios from '../utils/axios';
+import { useDispatch } from 'react-redux';
+import { login } from '../store/authSlice';
 import { FiUser, FiLock, FiMail } from 'react-icons/fi';
 
 function Login() {
@@ -10,47 +11,21 @@ function Login() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setLoading(true);
 
-    try {
-      console.log('Sending login data:', { email, password, role });
-      const response = await axios.post('/auth/login', { email, password, role });
-      
-      if (response.data.token) {
-        console.log('Login response:', response.data);
-        // Store auth data
-        localStorage.setItem('token', response.data.token);
-        localStorage.setItem('role', response.data.user.role);
-        localStorage.setItem('user', JSON.stringify(response.data.user));
-        
-        // Verify storage
-        console.log('Stored token:', localStorage.getItem('token'));
-        console.log('Stored role:', localStorage.getItem('role'));
-        console.log('Stored user:', localStorage.getItem('user'));
-        
-        // Set axios default headers
-        axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.token}`;
-        
-        // Redirect based on role
-        if (response.data.user.role === 'student') {
-          navigate('/student-dashboard');
-        } else {
-          navigate('/teacher-dashboard');
-        }
-      } else {
-        throw new Error('No token received');
-      }
-    } catch (error) {
-      console.error('Login error:', error);
-      console.error('Error response:', error.response?.data);
-      setError(error.response?.data?.message || error.response?.data?.error || 'Login failed. Please check your credentials and try again.');
-    } finally {
-      setLoading(false);
+    const result = await dispatch(login({ email, password, role }));
+
+    if (login.fulfilled.match(result)) {
+      navigate(result.payload.user.role === 'student' ? '/student-dashboard' : '/teacher-dashboard');
+    } else {
+      setError(result.payload || 'Login failed. Please check your credentials and try again.');
     }
+    setLoading(false);
   };
 
   return (

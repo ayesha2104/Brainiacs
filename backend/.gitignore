@@ -1,3 +1,9 @@
 node_modules
 # Keep environment variables out of version control
 .env
+
+# User-uploaded content should not live in git history
+uploads/avatars/*
+!uploads/avatars/.gitkeep
+
+coverage

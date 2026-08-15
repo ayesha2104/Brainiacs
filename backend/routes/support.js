@@ -1,6 +1,6 @@
 import express from 'express';
 import SupportTicket from '../models/SupportTicket.js';
-import { protect as auth } from '../middleware/authMiddleware.js';
+import auth from '../middleware/auth.js';
 
 const router = express.Router();
 
