@@ -51,10 +51,6 @@ const teacherProfileSchema = new mongoose.Schema({
     default: 0
   },
   bio: String,
-  courses: [{
-    title: String,
-    schedule: String
-  }],
   avatar: String
 });
 

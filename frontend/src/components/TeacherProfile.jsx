@@ -12,9 +12,10 @@ function TeacherProfile() {
         qualifications: [],
         experience: '',
         bio: '',
-        courses: [],
         avatar: '',
     });
+    const [courses, setCourses] = useState([]);
+    const [coursesLoading, setCoursesLoading] = useState(true);
 
     const [isEditing, setIsEditing] = useState(false);
     const [loading, setLoading] = useState(true);
@@ -22,7 +23,20 @@ function TeacherProfile() {
 
     useEffect(() => {
         fetchProfile();
+        fetchCourses();
     }, []);
+
+    const fetchCourses = async () => {
+        try {
+            setCoursesLoading(true);
+            const res = await axios.get('/courses?mine=true&limit=100');
+            setCourses(res.data.data);
+        } catch (error) {
+            console.error('Error fetching courses:', error);
+        } finally {
+            setCoursesLoading(false);
+        }
+    };
 
     const fetchProfile = async () => {
         try {
@@ -71,7 +85,6 @@ function TeacherProfile() {
                         qualifications: profileData.qualifications || userData.teacherProfile?.qualifications || [],
                         experience: profileData.experience || userData.teacherProfile?.experience || '',
                         bio: profileData.bio || userData.teacherProfile?.bio || '',
-                        courses: profileData.courses || userData.teacherProfile?.courses || [],
                         avatar: profileData.avatar || userData.teacherProfile?.avatar || '',
                     });
                 } catch (profileError) {
@@ -88,7 +101,6 @@ function TeacherProfile() {
                             qualifications: userData.teacherProfile.qualifications || [],
                             experience: userData.teacherProfile.experience || '',
                             bio: userData.teacherProfile.bio || '',
-                            courses: userData.teacherProfile.courses || [],
                             avatar: userData.teacherProfile.avatar || '',
                         });
                     } else {
@@ -110,7 +122,6 @@ function TeacherProfile() {
                         qualifications: localUserData.teacherProfile?.qualifications || [],
                         experience: localUserData.teacherProfile?.experience || '',
                         bio: localUserData.teacherProfile?.bio || '',
-                        courses: localUserData.teacherProfile?.courses || [],
                         avatar: localUserData.teacherProfile?.avatar || '',
                     });
                 } else {
@@ -440,15 +451,17 @@ function TeacherProfile() {
                         <div>
                             <h3 className="font-semibold text-gray-700">Courses Teaching</h3>
                             <div className="grid grid-cols-2 gap-4 mt-2">
-                                {profile.courses.length > 0 ? (
-                                    profile.courses.map((course, index) => (
-                                        <div key={index} className="bg-gray-50 p-3 rounded">
+                                {coursesLoading ? (
+                                    <p className="text-gray-500">Loading courses...</p>
+                                ) : courses.length > 0 ? (
+                                    courses.map((course) => (
+                                        <div key={course._id} className="bg-gray-50 p-3 rounded">
                                             <h4 className="font-medium">{course.title}</h4>
-                                            <p className="text-sm text-gray-600">{course.schedule}</p>
+                                            <p className="text-sm text-gray-600">{course.status}</p>
                                         </div>
                                     ))
                                 ) : (
-                                    <p className="text-gray-500">No courses assigned</p>
+                                    <p className="text-gray-500">No courses created yet</p>
                                 )}
                             </div>
                         </div>

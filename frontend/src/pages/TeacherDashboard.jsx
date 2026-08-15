@@ -11,6 +11,7 @@ function TeacherDashboard() {
   const location = useLocation();
 
   const [todaysClasses, setTodaysClasses] = useState([]);
+  const [courseCount, setCourseCount] = useState(0);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -80,6 +81,17 @@ function TeacherDashboard() {
     };
 
     fetchTodaysClasses();
+
+    const fetchCourseCount = async () => {
+      try {
+        const res = await axios.get('/courses?mine=true&limit=1');
+        setCourseCount(res.data.total);
+      } catch (err) {
+        console.error('Error fetching course count:', err);
+      }
+    };
+
+    fetchCourseCount();
   }, []);
 
   // Function to get the avatar URL
@@ -183,7 +195,7 @@ function TeacherDashboard() {
           <div className="bg-white p-6 rounded-lg shadow">
             <h3 className="text-sm font-medium text-gray-500">Courses Teaching</h3>
             <p className="mt-2 text-lg font-semibold text-gray-800">
-              {(profile?.courses?.length || user?.teacherProfile?.courses?.length || 0)} Courses
+              {courseCount} Courses
             </p>
           </div>
           <div className="bg-white p-6 rounded-lg shadow">
