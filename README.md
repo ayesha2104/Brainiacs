@@ -2,6 +2,11 @@
 
 A role-based college ERP platform for students and teachers — courses, homework, profiles, statistics, and support tickets.
 
+## Authors
+
+- Ayesha — https://github.com/ayesha2104
+- Swasteek — https://github.com/Swasteek
+
 ## Stack
 
 - **Frontend**: React 19, Vite, Redux Toolkit, React Router, Tailwind CSS, Axios
