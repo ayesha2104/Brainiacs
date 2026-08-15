@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import axios from '../utils/axios';
 
 const StatCard = ({ title, value, change, icon: Icon }) => {
     const isPositive = change >= 0;
@@ -80,9 +80,13 @@ const Statistics = () => {
     useEffect(() => {
         const fetchStats = async () => {
             try {
-                const response = await axios.get('/api/statistics');
+                const response = await axios.get('/statistics');
                 // Validate and ensure all required properties exist
-                const data = response.data || {};
+                // Note: the backend currently returns site-wide counts
+                // (totalUsers/totalHomeworks/totalCourses), not the
+                // per-user achievement fields this page expects — falls
+                // back to mock data below until that's reconciled.
+                const data = response.data?.data || {};
                 const validatedStats = {
                     coursesCompleted: data.coursesCompleted || 0,
                     coursesCompletedChange: data.coursesCompletedChange || 0,

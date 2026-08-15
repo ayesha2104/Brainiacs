@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import axios from '../utils/axios';
 
 const CourseCard = ({ course }) => {
     return (
@@ -69,12 +69,13 @@ const Courses = () => {
     useEffect(() => {
         const fetchCourses = async () => {
             try {
-                const response = await axios.get('/api/courses');
-                setCourses(response.data);
+                const response = await axios.get('/courses');
+                const courseList = response.data.data;
+                setCourses(courseList);
                 setLoading(false);
 
                 // Extract schedule from courses
-                const newSchedule = response.data.flatMap(course =>
+                const newSchedule = courseList.flatMap(course =>
                     course.schedule ? course.schedule.map(event => ({
                         ...event,
                         courseTitle: course.title

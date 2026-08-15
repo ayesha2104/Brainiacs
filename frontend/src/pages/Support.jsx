@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+import axios from '../utils/axios';
 
 const FAQItem = ({ question, answer }) => {
     const [isOpen, setIsOpen] = useState(false);
@@ -68,7 +68,7 @@ const Support = () => {
         setStatus({ type: 'loading', message: 'Sending your request...' });
 
         try {
-            await axios.post('/api/support/tickets', formData);
+            await axios.post('/support/tickets', formData);
             setStatus({
                 type: 'success',
                 message: 'Your request has been submitted successfully!'
