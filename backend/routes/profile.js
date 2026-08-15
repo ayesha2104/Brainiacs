@@ -8,14 +8,17 @@ import { verifyImageContent } from '../utils/validateImage.js';
 
 const router = express.Router();
 
+// Configurable so tests can point uploads at a throwaway directory instead
+// of the real uploads/avatars folder.
+const AVATAR_DIR = process.env.AVATAR_UPLOAD_DIR || 'uploads/avatars';
+
 // Configure multer for file upload
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-        const uploadDir = 'uploads/avatars';
-        if (!fs.existsSync(uploadDir)) {
-            fs.mkdirSync(uploadDir, { recursive: true });
+        if (!fs.existsSync(AVATAR_DIR)) {
+            fs.mkdirSync(AVATAR_DIR, { recursive: true });
         }
-        cb(null, uploadDir);
+        cb(null, AVATAR_DIR);
     },
     filename: function (req, file, cb) {
         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
@@ -43,7 +46,6 @@ const upload = multer({
 // Get student profile
 router.get('/student', auth, async (req, res) => {
     try {
-        console.log('Fetching student profile for user:', req.user.id);
 
         const user = await User.findById(req.user.id)
             .select('-password');
@@ -72,7 +74,6 @@ router.get('/student', auth, async (req, res) => {
             await user.save();
         }
 
-        console.log('Student profile retrieved:', user.studentProfile);
         res.json(user.studentProfile);
     } catch (err) {
         console.error('Profile fetch error:', err);
@@ -83,8 +84,6 @@ router.get('/student', auth, async (req, res) => {
 // Update student profile
 router.put('/student', auth, async (req, res) => {
     try {
-        console.log('Updating student profile for user:', req.user.id);
-        console.log('Update data:', req.body);
 
         const user = await User.findById(req.user.id);
         if (!user) {
@@ -109,7 +108,6 @@ router.put('/student', auth, async (req, res) => {
                 studyHours: 0
             };
             await user.save();
-            console.log('Created new profile for user');
         }
 
         // Get current profile data to preserve any fields not included in the update
@@ -146,7 +144,6 @@ router.put('/student', auth, async (req, res) => {
             };
         }
 
-        console.log('Prepared update data:', updatedProfileData);
 
         // Update the profile
         const updatedUser = await User.findByIdAndUpdate(
@@ -159,7 +156,6 @@ router.put('/student', auth, async (req, res) => {
             return res.status(400).json({ message: 'Failed to update profile' });
         }
 
-        console.log('Profile updated successfully:', updatedUser.studentProfile);
         res.json(updatedUser.studentProfile);
     } catch (err) {
         console.error('Profile update error:', err);
@@ -183,7 +179,7 @@ router.post('/student/avatar', auth, upload.single('avatar'), verifyImageContent
 
         // Delete old avatar if it exists
         if (user.studentProfile?.avatar) {
-            const oldAvatarPath = path.join('uploads/avatars', path.basename(user.studentProfile.avatar));
+            const oldAvatarPath = path.join(AVATAR_DIR, path.basename(user.studentProfile.avatar));
             if (fs.existsSync(oldAvatarPath)) {
                 fs.unlinkSync(oldAvatarPath);
             }
@@ -263,7 +259,7 @@ router.post('/teacher/avatar', auth, upload.single('avatar'), verifyImageContent
 
         // Delete old avatar if it exists
         if (user.teacherProfile?.avatar) {
-            const oldAvatarPath = path.join('uploads/avatars', path.basename(user.teacherProfile.avatar));
+            const oldAvatarPath = path.join(AVATAR_DIR, path.basename(user.teacherProfile.avatar));
             if (fs.existsSync(oldAvatarPath)) {
                 fs.unlinkSync(oldAvatarPath);
             }
