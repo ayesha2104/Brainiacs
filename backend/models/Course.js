@@ -76,4 +76,7 @@ const courseSchema = new mongoose.Schema({
     timestamps: true,
 });
 
-export default mongoose.model('Course', courseSchema); 
+courseSchema.index({ enrolledStudents: 1 });
+courseSchema.index({ status: 1 });
+
+export default mongoose.model('Course', courseSchema);

@@ -74,7 +74,7 @@ const Support = () => {
                 message: 'Your request has been submitted successfully!'
             });
             setFormData({ name: '', email: '', subject: '', message: '' });
-        } catch (error) {
+        } catch {
             setStatus({
                 type: 'error',
                 message: 'Failed to submit your request. Please try again.'

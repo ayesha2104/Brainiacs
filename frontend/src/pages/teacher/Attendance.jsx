@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import axios from '../../utils/axios';
 import { toast } from 'react-hot-toast';
 
 function TeacherAttendance() {
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [courseId, setCourseId] = useState('');
-  const [students, setStudents] = useState([
+  const [students, _setStudents] = useState([
     { _id: 'student1', name: 'John Doe' },
     { _id: 'student2', name: 'Jane Smith' },
     { _id: 'student3', name: 'Alex Johnson' },

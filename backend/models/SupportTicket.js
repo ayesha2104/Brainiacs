@@ -48,4 +48,6 @@ supportTicketSchema.pre('save', function (next) {
     next();
 });
 
+supportTicketSchema.index({ status: 1, createdAt: -1 });
+
 export default mongoose.model('SupportTicket', supportTicketSchema); 

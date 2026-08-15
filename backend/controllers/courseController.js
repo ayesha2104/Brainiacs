@@ -1,12 +1,22 @@
 import Course from '../models/Course.js';
 import expressAsyncHandler from 'express-async-handler';
+import { paginate } from '../utils/pagination.js';
 
 // @desc    Get all courses
 // @route   GET /api/courses
 // @access  Private
 export const getCourses = expressAsyncHandler(async (req, res) => {
-    const courses = await Course.find();
-    res.status(200).json(courses);
+    const { page, limit, skip } = paginate(req.query);
+    const filter = {};
+    if (req.query.status) filter.status = req.query.status;
+    if (req.query.search) filter.title = { $regex: req.query.search, $options: 'i' };
+
+    const [courses, total] = await Promise.all([
+        Course.find(filter).skip(skip).limit(limit),
+        Course.countDocuments(filter),
+    ]);
+
+    res.status(200).json({ data: courses, page, limit, total, totalPages: Math.ceil(total / limit) });
 });
 
 // @desc    Get course by ID
@@ -30,6 +40,7 @@ export const createCourse = expressAsyncHandler(async (req, res) => {
         description,
         instructor,
         startDate,
+        endDate,
         tags,
         icon,
     } = req.body;
@@ -37,6 +48,7 @@ export const createCourse = expressAsyncHandler(async (req, res) => {
     const course = await Course.create({
         title,
         description,
+        endDate,
         instructor,
         startDate,
         tags,

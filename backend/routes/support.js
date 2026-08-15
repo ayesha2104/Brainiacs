@@ -1,8 +1,10 @@
 import express from 'express';
 import SupportTicket from '../models/SupportTicket.js';
-import auth from '../middleware/auth.js';
+import auth, { requireRole } from '../middleware/auth.js';
+import { paginate } from '../utils/pagination.js';
 
 const router = express.Router();
+const staffOnly = requireRole('teacher', 'admin');
 
 // Create a support ticket
 router.post('/tickets', async (req, res) => {
@@ -21,20 +23,26 @@ router.post('/tickets', async (req, res) => {
     }
 });
 
-// Get all tickets (admin only)
-router.get('/tickets', auth, async (req, res) => {
-    // Add admin check here
+// Get all tickets (staff only)
+router.get('/tickets', auth, staffOnly, async (req, res) => {
     try {
-        const tickets = await SupportTicket.find()
-            .sort({ createdAt: -1 });
-        res.json(tickets);
+        const { page, limit, skip } = paginate(req.query);
+        const filter = {};
+        if (req.query.status) filter.status = req.query.status;
+
+        const [tickets, total] = await Promise.all([
+            SupportTicket.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit),
+            SupportTicket.countDocuments(filter),
+        ]);
+
+        res.json({ data: tickets, page, limit, total, totalPages: Math.ceil(total / limit) });
     } catch (err) {
         res.status(500).json({ message: err.message });
     }
 });
 
 // Get a specific ticket
-router.get('/tickets/:id', auth, async (req, res) => {
+router.get('/tickets/:id', auth, staffOnly, async (req, res) => {
     try {
         const ticket = await SupportTicket.findById(req.params.id);
         if (!ticket) {
@@ -46,9 +54,8 @@ router.get('/tickets/:id', auth, async (req, res) => {
     }
 });
 
-// Update a ticket status (admin only)
-router.patch('/tickets/:id', auth, async (req, res) => {
-    // Add admin check here
+// Update a ticket status (staff only)
+router.patch('/tickets/:id', auth, staffOnly, async (req, res) => {
     try {
         const ticket = await SupportTicket.findById(req.params.id);
         if (!ticket) {
@@ -73,4 +80,4 @@ router.patch('/tickets/:id', auth, async (req, res) => {
     }
 });
 
-export default router; 
+export default router;

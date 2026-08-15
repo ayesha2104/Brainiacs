@@ -4,6 +4,7 @@ import path from 'path';
 import fs from 'fs';
 import auth from '../middleware/auth.js';
 import User from '../models/User.js';
+import { verifyImageContent } from '../utils/validateImage.js';
 
 const router = express.Router();
 
@@ -167,7 +168,7 @@ router.put('/student', auth, async (req, res) => {
 });
 
 // Upload student avatar
-router.post('/student/avatar', auth, upload.single('avatar'), async (req, res) => {
+router.post('/student/avatar', auth, upload.single('avatar'), verifyImageContent, async (req, res) => {
     try {
         if (!req.file) {
             return res.status(400).json({ message: 'No file uploaded' });
@@ -247,7 +248,7 @@ router.put('/teacher', auth, async (req, res) => {
 });
 
 // Upload teacher avatar
-router.post('/teacher/avatar', auth, upload.single('avatar'), async (req, res) => {
+router.post('/teacher/avatar', auth, upload.single('avatar'), verifyImageContent, async (req, res) => {
     try {
         if (!req.file) {
             return res.status(400).json({ message: 'No file uploaded' });

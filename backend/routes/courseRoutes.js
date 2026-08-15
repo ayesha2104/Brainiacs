@@ -10,24 +10,25 @@ import {
     updateCourseProgress,
     updateHoursSpent,
 } from '../controllers/courseController.js';
-import auth, { admin } from '../middleware/auth.js';
+import auth, { requireRole } from '../middleware/auth.js';
 
 const router = express.Router();
+const teacherOrAdmin = requireRole('teacher', 'admin');
 
 // Base routes
 router.route('/')
     .get(auth, getCourses)
-    .post(auth, admin, createCourse);
+    .post(auth, teacherOrAdmin, createCourse);
 
 router.route('/:id')
     .get(auth, getCourseById)
-    .put(auth, admin, updateCourse)
-    .delete(auth, admin, deleteCourse);
+    .put(auth, teacherOrAdmin, updateCourse)
+    .delete(auth, teacherOrAdmin, deleteCourse);
 
 // Schedule routes
 router.route('/:id/schedule')
     .get(auth, getCourseSchedule)
-    .put(auth, admin, updateCourseSchedule);
+    .put(auth, teacherOrAdmin, updateCourseSchedule);
 
 // Progress routes
 router.route('/:id/progress')

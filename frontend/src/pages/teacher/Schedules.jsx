@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import axios from '../../utils/axios';
 import { toast } from 'react-hot-toast';
 
 function ScheduleCalendar() {

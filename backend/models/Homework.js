@@ -41,4 +41,7 @@ const homeworkSchema = new mongoose.Schema({
     }
 });
 
-export default mongoose.model('Homework', homeworkSchema); 
+homeworkSchema.index({ assignedTo: 1, dueDate: 1 });
+homeworkSchema.index({ status: 1 });
+
+export default mongoose.model('Homework', homeworkSchema);

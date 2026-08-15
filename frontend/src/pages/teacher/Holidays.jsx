@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import axios from '../../utils/axios';
 import { toast } from 'react-hot-toast';
 
 function TeacherLeaveApplication() {
