@@ -82,10 +82,6 @@ const Statistics = () => {
             try {
                 const response = await axios.get('/statistics');
                 // Validate and ensure all required properties exist
-                // Note: the backend currently returns site-wide counts
-                // (totalUsers/totalHomeworks/totalCourses), not the
-                // per-user achievement fields this page expects — falls
-                // back to mock data below until that's reconciled.
                 const data = response.data?.data || {};
                 const validatedStats = {
                     coursesCompleted: data.coursesCompleted || 0,
