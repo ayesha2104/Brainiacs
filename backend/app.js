@@ -15,6 +15,7 @@ import profileRoutes from './routes/profile.js';
 import scheduleRoutes from './routes/scheduleRoutes.js';
 import attendanceRoutes from './routes/attendanceRoutes.js';
 import leaveRoutes from './routes/leaveRoutes.js';
+import goalRoutes from './routes/goalRoutes.js';
 
 const app = express();
 
@@ -65,6 +66,7 @@ app.use('/api/profile', profileRoutes);
 app.use('/api/schedules', scheduleRoutes);
 app.use('/api/attendance', attendanceRoutes);
 app.use('/api/leave-applications', leaveRoutes);
+app.use('/api/goals', goalRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {

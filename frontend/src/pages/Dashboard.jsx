@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from '../utils/axios';
 import { Link, useLocation } from 'react-router-dom';
-import { FiHome, FiBook, FiClipboard, FiBarChart2, FiHelpCircle, FiBell, FiUser } from 'react-icons/fi';
+import { FiHome, FiBook, FiClipboard, FiBarChart2, FiHelpCircle, FiUser, FiTarget } from 'react-icons/fi';
 
 const Dashboard = () => {
   const [user, setUser] = useState(null);
@@ -70,6 +70,7 @@ const Dashboard = () => {
     { icon: <FiHome className="w-5 h-5" />, text: 'Dashboard', path: '/student-dashboard' },
     { icon: <FiUser className="w-5 h-5" />, text: 'Profile', path: '/student-profile' },
     { icon: <FiBook className="w-5 h-5" />, text: 'Courses', path: '/student-courses' },
+    { icon: <FiTarget className="w-5 h-5" />, text: 'Goals', path: '/student-goals' },
     { icon: <FiClipboard className="w-5 h-5" />, text: 'Homeworks', path: '/student-homeworks' },
     { icon: <FiBarChart2 className="w-5 h-5" />, text: 'Statistics', path: '/student-statistics' },
     { icon: <FiHelpCircle className="w-5 h-5" />, text: 'Need Support', path: '/student-support' },

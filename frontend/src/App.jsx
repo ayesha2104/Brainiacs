@@ -13,6 +13,7 @@ import TeacherSupport from './pages/teacher/Support';
 import TeacherProfile from './components/TeacherProfile';
 import StudentProfile from './components/StudentProfile';
 import Courses from './pages/Courses';
+import Goals from './pages/Goals';
 import Homeworks from './pages/Homeworks';
 import Statistics from './pages/Statistics';
 import Support from './pages/Support';
@@ -36,6 +37,7 @@ function App() {
             <Route path="/student-dashboard" element={<ProtectedRoute allowedRoles={['student']}><Dashboard /></ProtectedRoute>} />
             <Route path="/student-profile" element={<ProtectedRoute allowedRoles={['student']}><StudentProfile /></ProtectedRoute>} />
             <Route path="/student-courses" element={<ProtectedRoute allowedRoles={['student']}><Courses /></ProtectedRoute>} />
+            <Route path="/student-goals" element={<ProtectedRoute allowedRoles={['student']}><Goals /></ProtectedRoute>} />
             <Route path="/student-homeworks" element={<ProtectedRoute allowedRoles={['student']}><Homeworks /></ProtectedRoute>} />
             <Route path="/student-statistics" element={<ProtectedRoute allowedRoles={['student']}><Statistics /></ProtectedRoute>} />
             <Route path="/student-support" element={<ProtectedRoute allowedRoles={['student']}><Support /></ProtectedRoute>} />
